@@ -23,13 +23,15 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* 상단 정렬 */
             min-height: 100vh;
             background-color: #f7fafc;
+            padding-top: 2rem; /* 상단 여백 추가 */
         }
         .info-panel {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             width: 100%;
             max-width: 480px; /* 캔버스 너비와 맞춤 */
             padding: 0.5rem 1rem;
@@ -41,13 +43,40 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 2rem;
             border-radius: 1rem;
             text-align: center;
             display: none; /* 기본적으로 숨김 */
             z-index: 10;
+            width: 300px;
+        }
+        .ranking-container {
+            width: 100%;
+            max-width: 480px;
+            margin-top: 2rem;
+        }
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .ranking-table th, .ranking-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .ranking-table th {
+            background-color: #edf2f7;
+            color: #4a5568;
+            font-weight: bold;
+        }
+        .ranking-table tr:last-child td {
+            border-bottom: none;
         }
     </style>
 </head>
@@ -56,22 +85,51 @@
     <div class="game-container p-4">
         <h1 class="text-3xl font-bold text-gray-800 mb-4">벽돌 깨기</h1>
         <div class="info-panel">
-            <div id="score">점수: 0</div>
-            <div id="lives">목숨: 3</div>
+            <div>
+                <div id="score">점수: 0</div>
+                <div id="lives">목숨: 3</div>
+            </div>
+            <div class="text-right">
+                <div id="currentPlayer" class="text-sm">플레이어: 없음</div>
+                <button id="changeNameButton" class="text-xs text-blue-500 hover:underline">이름 변경/삭제</button>
+            </div>
         </div>
         <div id="canvas-container" class="relative">
             <canvas id="gameCanvas" width="480" height="320"></canvas>
             <div id="messageBox" class="message-box">
                 <h2 id="messageTitle" class="text-2xl font-bold mb-2"></h2>
                 <p id="messageText" class="mb-4"></p>
-                <button id="restartButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <div id="highScoreForm" class="hidden">
+                    <input type="text" id="playerNameInput" placeholder="이름을 입력하세요" class="text-black p-2 rounded w-full mb-2">
+                    <button id="saveScoreButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full">
+                        점수 저장
+                    </button>
+                </div>
+                <button id="restartButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 w-full">
                     다시 시작
                 </button>
             </div>
         </div>
+        <div class="ranking-container">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">🏆 랭킹 🏆</h2>
+            <table class="ranking-table">
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>이름</th>
+                        <th>점수</th>
+                        <th>참여횟수</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingBody">
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
+        // 2025-09-09 수정: 랭킹 기능 추가
+        // 2025-09-09 수정: 마지막 플레이어 이름 저장 및 점수 자동 업데이트 기능 추가
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
@@ -80,6 +138,12 @@
         const messageTitle = document.getElementById('messageTitle');
         const messageText = document.getElementById('messageText');
         const restartButton = document.getElementById('restartButton');
+        const rankingBody = document.getElementById('rankingBody');
+        const highScoreForm = document.getElementById('highScoreForm');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const saveScoreButton = document.getElementById('saveScoreButton');
+        const currentPlayerElement = document.getElementById('currentPlayer');
+        const changeNameButton = document.getElementById('changeNameButton');
 
         // 게임 변수 설정
         let ballRadius = 10;
@@ -88,16 +152,13 @@
         let dx = 2;
         let dy = -2;
 
-        // 패들 변수 설정
         let paddleHeight = 10;
         let paddleWidth = 75;
         let paddleX = (canvas.width - paddleWidth) / 2;
 
-        // 키 입력 변수
         let rightPressed = false;
         let leftPressed = false;
 
-        // 벽돌 변수 설정
         let brickRowCount = 5;
         let brickColumnCount = 7;
         let brickWidth = 54;
@@ -105,9 +166,8 @@
         let brickPadding = 10;
         let brickOffsetTop = 30;
         let brickOffsetLeft = 30;
-        const brickColors = ["#f56565", "#ed8936", "#ecc94b", "#48bb78", "#4299e1"]; // 다양한 벽돌 색상
+        const brickColors = ["#f56565", "#ed8936", "#ecc94b", "#48bb78", "#4299e1"];
 
-        // 벽돌 배열 초기화
         let bricks = [];
         function initBricks() {
             bricks = [];
@@ -119,58 +179,114 @@
             }
         }
 
-        // 게임 상태 변수
         let score = 0;
         let lives = 3;
         let gamePaused = false;
+        let rankings = [];
+        let currentPlayerName = null;
+
+        // --- 플레이어 및 랭킹 함수 ---
+        function loadPlayerData() {
+            currentPlayerName = localStorage.getItem('brickBreakerPlayerName');
+            if (currentPlayerName) {
+                currentPlayerElement.innerText = `플레이어: ${currentPlayerName}`;
+            } else {
+                currentPlayerElement.innerText = `플레이어: 없음`;
+            }
+        }
+
+        function loadRankings() {
+            const savedRankings = localStorage.getItem('brickBreakerRankings');
+            rankings = savedRankings ? JSON.parse(savedRankings) : [];
+        }
+
+        function saveRankings() {
+            localStorage.setItem('brickBreakerRankings', JSON.stringify(rankings));
+        }
+
+        function displayRankings() {
+            rankingBody.innerHTML = "";
+            if (rankings.length === 0) {
+                 rankingBody.innerHTML = `<tr><td colspan="4">아직 랭킹이 없습니다.</td></tr>`;
+                 return;
+            }
+            rankings.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.playCount}</td>
+                `;
+                rankingBody.appendChild(row);
+            });
+        }
+        
+        function checkHighScore(newScore) {
+            if (newScore <= 0) return false;
+            const isHighScore = rankings.length < 5 || newScore > rankings[rankings.length - 1].score;
+            return isHighScore;
+        }
+
+        function addScoreToRanking(name, newScore) {
+            const existingPlayerIndex = rankings.findIndex(entry => entry.name === name);
+
+            if (existingPlayerIndex > -1) {
+                rankings[existingPlayerIndex].playCount++;
+                if (newScore > rankings[existingPlayerIndex].score) {
+                    rankings[existingPlayerIndex].score = newScore;
+                }
+            } else {
+                rankings.push({ name: name, score: newScore, playCount: 1 });
+            }
+
+            rankings.sort((a, b) => b.score - a.score);
+            rankings = rankings.slice(0, 5);
+            
+            saveRankings();
+            displayRankings();
+        }
 
         // 이벤트 리스너 추가
         document.addEventListener("keydown", keyDownHandler, false);
         document.addEventListener("keyup", keyUpHandler, false);
         document.addEventListener("mousemove", mouseMoveHandler, false);
         canvas.addEventListener("touchmove", touchMoveHandler, false);
-        restartButton.addEventListener("click", () => {
-            document.location.reload();
+        
+        restartButton.addEventListener("click", () => { document.location.reload(); });
+        
+        saveScoreButton.addEventListener('click', () => {
+            const playerName = playerNameInput.value.trim() || '익명';
+            localStorage.setItem('brickBreakerPlayerName', playerName);
+            loadPlayerData();
+            addScoreToRanking(playerName, score);
+            highScoreForm.classList.add('hidden');
+            restartButton.classList.remove('hidden');
+            messageTitle.innerText = "저장 완료!";
+            messageText.innerText = "랭킹이 성공적으로 저장되었습니다.";
+        });
+        
+        changeNameButton.addEventListener('click', () => {
+            localStorage.removeItem('brickBreakerPlayerName');
+            loadPlayerData();
         });
 
-
-        // 키 입력 핸들러
-        function keyDownHandler(e) {
-            if (e.key == "Right" || e.key == "ArrowRight") {
-                rightPressed = true;
-            } else if (e.key == "Left" || e.key == "ArrowLeft") {
-                leftPressed = true;
-            }
-        }
-
-        function keyUpHandler(e) {
-            if (e.key == "Right" || e.key == "ArrowRight") {
-                rightPressed = false;
-            } else if (e.key == "Left" || e.key == "ArrowLeft") {
-                leftPressed = false;
-            }
-        }
-
-        // 마우스 및 터치 이동 핸들러
+        function keyDownHandler(e) { if (e.key == "Right" || e.key == "ArrowRight") rightPressed = true; else if (e.key == "Left" || e.key == "ArrowLeft") leftPressed = true; }
+        function keyUpHandler(e) { if (e.key == "Right" || e.key == "ArrowRight") rightPressed = false; else if (e.key == "Left" || e.key == "ArrowLeft") leftPressed = false; }
+        
         function mouseMoveHandler(e) {
-            let relativeX = e.clientX - canvas.offsetLeft;
-            if (relativeX > 0 && relativeX < canvas.width) {
-                paddleX = relativeX - paddleWidth / 2;
-            }
+            let relativeX = e.clientX - canvas.getBoundingClientRect().left;
+            if (relativeX > 0 && relativeX < canvas.width) paddleX = relativeX - paddleWidth / 2;
         }
 
         function touchMoveHandler(e) {
             if (e.touches.length > 0) {
-                let relativeX = e.touches[0].clientX - canvas.offsetLeft;
-                if (relativeX > 0 && relativeX < canvas.width) {
-                    paddleX = relativeX - paddleWidth / 2;
-                }
+                 let relativeX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+                if (relativeX > 0 && relativeX < canvas.width) paddleX = relativeX - paddleWidth / 2;
             }
-             e.preventDefault(); // 페이지 스크롤 방지
+             e.preventDefault();
         }
 
-
-        // 충돌 감지 함수
         function collisionDetection() {
             for (let c = 0; c < brickColumnCount; c++) {
                 for (let r = 0; r < brickRowCount; r++) {
@@ -182,7 +298,7 @@
                             score++;
                             scoreElement.innerHTML = `점수: ${score}`;
                             if (score == brickRowCount * brickColumnCount) {
-                                showMessage("승리!", "축하합니다! 모든 벽돌을 부쉈습니다.");
+                                showMessage("승리!", `축하합니다! 최종 점수: ${score}`);
                             }
                         }
                     }
@@ -190,30 +306,34 @@
             }
         }
         
-        // 메시지 박스 표시 함수
         function showMessage(title, text) {
+            gamePaused = true;
             messageTitle.innerText = title;
             messageText.innerText = text;
+
+            const isEndGame = title === "게임 오버" || title === "승리!";
+            const isHigh = checkHighScore(score);
+
+            if (isEndGame && isHigh) {
+                if (currentPlayerName) {
+                    addScoreToRanking(currentPlayerName, score);
+                    highScoreForm.classList.add('hidden');
+                    restartButton.classList.remove('hidden');
+                    messageText.innerText = `점수 ${score}점이 '${currentPlayerName}'님의 이름으로 자동 저장되었습니다.`;
+                } else {
+                    highScoreForm.classList.remove('hidden');
+                    restartButton.classList.add('hidden');
+                    messageText.innerText = `새로운 높은 점수: ${score}\n이름을 입력하여 랭킹을 저장하세요!`;
+                }
+            } else {
+                highScoreForm.classList.add('hidden');
+                restartButton.classList.remove('hidden');
+            }
             messageBox.style.display = 'block';
-            gamePaused = true;
         }
 
-        // 그리기 함수들
-        function drawBall() {
-            ctx.beginPath();
-            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-            ctx.fillStyle = "#f7fafc"; // 밝은 공 색상
-            ctx.fill();
-            ctx.closePath();
-        }
-
-        function drawPaddle() {
-            ctx.beginPath();
-            ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-            ctx.fillStyle = "#63b3ed"; // 패들 색상
-            ctx.fill();
-            ctx.closePath();
-        }
+        function drawBall() { ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI * 2); ctx.fillStyle = "#f7fafc"; ctx.fill(); ctx.closePath(); }
+        function drawPaddle() { ctx.beginPath(); ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight); ctx.fillStyle = "#63b3ed"; ctx.fill(); ctx.closePath(); }
 
         function drawBricks() {
             for (let c = 0; c < brickColumnCount; c++) {
@@ -233,7 +353,6 @@
             }
         }
         
-        // 메인 그리기 함수 (게임 루프)
         function draw() {
             if (gamePaused) return;
 
@@ -243,14 +362,10 @@
             drawPaddle();
             collisionDetection();
 
-            // 공의 벽 충돌 처리
-            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
-                dx = -dx;
-            }
+            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
             if (y + dy < ballRadius) {
                 dy = -dy;
             } else if (y + dy > canvas.height - ballRadius) {
-                // 패들과 공의 충돌 처리
                 if (x > paddleX && x < paddleX + paddleWidth) {
                     dy = -dy;
                 } else {
@@ -259,7 +374,6 @@
                     if (!lives) {
                         showMessage("게임 오버", `최종 점수: ${score}`);
                     } else {
-                        // 공과 패들 위치 초기화
                         x = canvas.width / 2;
                         y = canvas.height - 30;
                         dx = 2;
@@ -269,12 +383,8 @@
                 }
             }
 
-            // 패들 이동 처리
-            if (rightPressed && paddleX < canvas.width - paddleWidth) {
-                paddleX += 7;
-            } else if (leftPressed && paddleX > 0) {
-                paddleX -= 7;
-            }
+            if (rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 7;
+            else if (leftPressed && paddleX > 0) paddleX -= 7;
 
             x += dx;
             y += dy;
@@ -283,9 +393,13 @@
         }
 
         // 게임 시작
+        loadPlayerData();
+        loadRankings();
+        displayRankings();
         initBricks();
         draw();
     </script>
 
 </body>
 </html>
+
