@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT 자격증 시험 시스템</title>
+    <title>CBT 자격증 시험 시스템 (단답형)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,39 +22,14 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        .option-label {
-            display: block;
-            padding: 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-        .option-label:hover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-        }
-        input[type="radio"]:checked + .option-label {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
-            font-weight: bold;
-        }
-        input[type="radio"] {
-            display: none;
-        }
         .btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.5rem 1rem;
             border-radius: 8px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
             border: none;
-        }
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
         }
         .btn-primary {
             background-color: #3b82f6;
@@ -64,11 +39,18 @@
             background-color: #2563eb;
         }
         .btn-secondary {
-            background-color: #e2e8f0;
-            color: #475569;
+            background-color: #6b7280;
+            color: white;
         }
         .btn-secondary:hover {
-            background-color: #cbd5e1;
+            background-color: #4b5563;
+        }
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #059669;
         }
         .btn-danger {
             background-color: #ef4444;
@@ -77,26 +59,22 @@
         .btn-danger:hover {
             background-color: #dc2626;
         }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #e5e7eb;
-            border-radius: 9999px;
-            height: 10px;
+        .btn-warning {
+            background-color: #f59e0b;
+            color: white;
         }
-        .progress-bar {
-            background-color: #3b82f6;
-            height: 10px;
-            border-radius: 9999px;
-            transition: width 0.3s ease-in-out;
+        .btn-warning:hover {
+            background-color: #d97706;
         }
     </style>
 </head>
 <body>
     
+    <!-- 시작 화면 -->
     <div id="start-screen" class="container p-8">
         <div class="text-center">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">CBT 자격증 시험 시스템</h1>
-            <p class="text-gray-600 mb-8">원하는 방식으로 시험을 시작하세요.</p>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">CBT 자격증 시험 시스템 (단답형)</h1>
+            <p class="text-gray-600 mb-8">문제집을 선택하거나 CSV 파일을 업로드하여 학습을 시작하세요.</p>
         </div>
         
         <div class="space-y-8">
@@ -109,7 +87,7 @@
             <div class="border p-6 rounded-lg bg-gray-50">
                 <h2 class="text-xl font-bold text-gray-700 mb-3">내 문제집 목록</h2>
                 <div id="quiz-list" class="space-y-3">
-                    <!-- 저장된 퀴즈 목록이 여기에 동적으로 추가됩니다 -->
+                    <!-- 저장된 퀴즈 목록 -->
                 </div>
                  <p id="no-quiz-list" class="text-sm text-gray-500 text-center py-4 hidden">저장된 문제집이 없습니다.</p>
             </div>
@@ -122,86 +100,77 @@
                 </label>
                 <input type="file" id="csv-file-input" class="hidden" accept=".csv">
                 <p class="text-xs text-left text-gray-500 mt-3">
-                    <strong>형식:</strong> question,option1,option2,option3,option4,answer_index(0~3),explanation
+                    <strong>형식 (3개 열):</strong> question,answer,explanation
                 </p>
                 <p id="csv-message" class="text-sm mt-2 h-4"></p>
             </div>
         </div>
     </div>
 
-    <div id="quiz-main-container" class="container hidden">
-        <!-- 퀴즈 화면 -->
-        <div id="quiz-screen">
-            <div class="p-8 border-b">
-                <div class="flex justify-between items-center mb-4">
-                    <p id="quiz-title" class="text-sm font-semibold text-gray-500"></p>
-                    <p id="question-counter" class="text-lg font-bold text-gray-700"></p>
-                </div>
-                <div class="progress-bar-container mb-6">
-                    <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
-                </div>
-                <h2 id="question-text" class="text-2xl font-bold text-gray-800"></h2>
-            </div>
-            <div id="answer-options" class="p-8"></div>
-            <div id="navigation-buttons" class="flex justify-between p-8 border-t bg-gray-50">
-                <button id="prev-btn" class="btn btn-secondary"><i class="fas fa-arrow-left mr-2"></i>이전</button>
-                <button id="next-btn" class="btn btn-primary">다음<i class="fas fa-arrow-right ml-2"></i></button>
-                <button id="submit-btn" class="btn btn-primary hidden bg-green-500 hover:bg-green-600"><i class="fas fa-check-circle mr-2"></i>답안 제출</button>
-            </div>
+    <!-- 문제 풀이 화면 -->
+    <div id="quiz-display-screen" class="container p-8 hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="quiz-title" class="text-2xl font-bold text-gray-800"></h2>
+            <button id="back-to-main-btn" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>메인으로
+            </button>
         </div>
-        <!-- 결과 화면 -->
-        <div id="result-screen" class="hidden p-8">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">시험 결과</h2>
-            <p id="score-text" class="text-xl text-center text-gray-600 mb-8"></p>
-            <div id="detailed-results" class="space-y-6"></div>
-            <div class="text-center mt-12">
-                 <button id="home-btn" class="btn btn-secondary mr-2"><i class="fas fa-home mr-2"></i>처음으로</button>
-                <button id="restart-btn" class="btn btn-primary"><i class="fas fa-redo mr-2"></i>다시 풀기</button>
-            </div>
+        
+        <!-- 문제들이 표시될 영역 -->
+        <div id="problem-display-area" class="space-y-8">
+            <!-- 
+            [샘플 문제 블록 구조]
+            <div class="problem-block border rounded-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">[문제 1] 문제 내용...</h3>
+                <div class="flex space-x-2">
+                    <input type="text" class="answer-input flex-grow border-gray-300 rounded-lg shadow-sm" placeholder="정답을 입력하세요...">
+                    <button class="btn btn-success check-answer-btn">정답 확인</button>
+                </div>
+                <p class="answer-result text-sm font-medium mt-3 h-5"></p>
+                <div class="mt-4 space-x-2">
+                    <button class="btn btn-secondary toggle-explanation-btn">해설 보기</button>
+                    <button class="btn btn-warning random-problem-btn">랜덤 문제</button>
+                </div>
+                <p class="explanation-text bg-gray-100 p-4 rounded-lg mt-4 text-gray-700 hidden">
+                    해설 내용...
+                </p>
+            </div> 
+            -->
         </div>
     </div>
 
+
     <script>
+        // --- 샘플 문제 데이터 (단답형) ---
         const sampleQuizData = [
-            { question: "소프트웨어 개발 방법론 중, 폭포수 모델(Waterfall Model)의 가장 큰 특징으로 옳은 것은 무엇입니까?", options: ["요구사항 변경에 유연하게 대처할 수 있다.", "각 단계가 순차적으로 진행되며, 이전 단계로 돌아가기 어렵다.", "고객과의 지속적인 소통을 가장 중요하게 생각한다.", "프로토타입을 계속해서 만들어 사용자에게 보여준다."], answer: 1, explanation: "폭포수 모델은 이름처럼 물이 떨어지듯 각 개발 단계(요구분석 → 설계 → 구현 → 테스트 → 유지보수)가 순차적으로 진행되는 선형 순차적 모델입니다. 이전 단계가 완벽히 끝나야 다음 단계로 진행할 수 있으며, 변경에 대응하기 어려운 단점이 있습니다." },
-            { question: "데이터베이스에서 하나의 트랜잭션이 성공적으로 완료되었음을 확정하는 SQL 명령어는 무엇입니까?", options: ["COMMIT", "ROLLBACK", "SAVEPOINT", "TRANSACTION"], answer: 0, explanation: "COMMIT은 트랜잭션의 모든 변경 내용을 데이터베이스에 영구적으로 저장하는 명령어입니다. 반면 ROLLBACK은 트랜잭션의 모든 변경 내용을 취소하고 이전 상태로 되돌립니다." },
-            { question: "OSI 7계층 중, 데이터의 암호화, 압축, 그리고 포맷 변환을 담당하는 계층은 어디입니까?", options: ["응용 계층 (Application Layer)", "표현 계층 (Presentation Layer)", "세션 계층 (Session Layer)", "전송 계층 (Transport Layer)"], answer: 1, explanation: "표현 계층(Presentation Layer)은 응용 계층으로부터 받은 데이터를 모든 시스템이 이해할 수 있는 공통된 형식으로 변환하는 역할을 합니다. 데이터의 암호화(Encryption), 압축(Compression) 등이 여기에 속합니다." },
+            { question: "시스템 관리와 관련하여 다음의 설명이 의미하는 용어를 쓰시오.\n\nA는 한국IT 보안관제실에서 근무하게 되었다. A는 서비스 운용 중 외부 공격으로 인한 서버다운, 자연재해, 사소한 인적 실수 등으로 인해 장애가 발생한 경우, 고객에게 약속한 웹 서비스, 원격 응대 서비스를 정상적으로 수행하기 위해 구축한 시스템을 관리하는 업무를 수행한다. 이 용어는 위와 같은 재해 또는 업무중단 시점부터 업무가 복구되어 다시 정상 가동 될 때까지의 시간을 의미한다.", 
+              answer: "RTO", 
+              explanation: "RTO (Recovery Time Objective, 복구 목표 시간)는 업무 중단 시점부터 복구되어 다시 정상 가동될 때까지의 시간을 의미합니다." },
+            { question: "클라이언트와 서버 간 자바스크립트 및 XML을 비동기 방식으로 처리하며, 전체 페이지를 새로 고치지 않고도 일부 정보만 업데이트할 수 있도록 하는 기술을 의미하는 용어를 쓰시오.", 
+              answer: "AJAX", 
+              explanation: "AJAX (Asynchronous JavaScript and XML)는 비동기 방식으로 서버와 통신하여 페이지 새로고침 없이 동적으로 컨텐츠를 변경하는 기술입니다." }
         ];
 
         // --- DOM 요소 ---
         const startScreen = document.getElementById('start-screen');
-        const quizMainContainer = document.getElementById('quiz-main-container');
+        const quizDisplayScreen = document.getElementById('quiz-display-screen');
         const startSampleBtn = document.getElementById('start-sample-btn');
         const csvFileInput = document.getElementById('csv-file-input');
         const csvMessage = document.getElementById('csv-message');
         const quizList = document.getElementById('quiz-list');
         const noQuizList = document.getElementById('no-quiz-list');
-        
-        const quizScreen = document.getElementById('quiz-screen');
-        const resultScreen = document.getElementById('result-screen');
         const quizTitle = document.getElementById('quiz-title');
-        const questionCounter = document.getElementById('question-counter');
-        const progressBar = document.getElementById('progress-bar');
-        const questionText = document.getElementById('question-text');
-        const answerOptions = document.getElementById('answer-options');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const submitBtn = document.getElementById('submit-btn');
-        const scoreText = document.getElementById('score-text');
-        const detailedResults = document.getElementById('detailed-results');
-        const restartBtn = document.getElementById('restart-btn');
-        const homeBtn = document.getElementById('home-btn');
+        const backToMainBtn = document.getElementById('back-to-main-btn');
+        const problemDisplayArea = document.getElementById('problem-display-area');
 
         // --- 퀴즈 상태 변수 ---
-        let activeQuizData = [];
-        let currentQuestionIndex = 0;
-        let userAnswers = [];
         let savedQuizSets = [];
-        const STORAGE_KEY = 'cbtQuizSets';
+        const STORAGE_KEY = 'cbtQuizSets_v3_shortAnswer'; // 새 버전을 위한 키
 
         // --- 함수 ---
         function loadQuizSets() {
             const storedQuizzes = localStorage.getItem(STORAGE_KEY);
+            // { name: string, questions: [{question, answer, explanation}] }
             savedQuizSets = storedQuizzes ? JSON.parse(storedQuizzes) : [];
         }
 
@@ -221,8 +190,8 @@
                 listItem.className = 'flex items-center justify-between p-3 bg-white border rounded-lg';
                 listItem.innerHTML = `
                     <span class="font-medium text-gray-700">${quiz.name} (${quiz.questions.length}문제)</span>
-                    <div>
-                        <button class="btn btn-sm btn-primary start-quiz-btn" data-index="${index}">시작</button>
+                    <div class="flex space-x-2">
+                        <button class="btn btn-sm btn-primary start-quiz-btn" data-index="${index}">학습 시작</button>
                         <button class="btn btn-sm btn-danger delete-quiz-btn" data-index="${index}">삭제</button>
                     </div>
                 `;
@@ -231,7 +200,6 @@
         }
 
         function parseCSV(text) {
-            // ... (CSV 파싱 로직은 이전과 동일)
             const questions = [];
             const lines = text.split('\n').filter(line => line.trim() !== '');
             for (let i = 0; i < lines.length; i++) {
@@ -251,105 +219,96 @@
                 }
                 columns.push(currentField.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
 
-                if (columns.length !== 7) {
-                    csvMessage.textContent = `오류: ${i + 1}번째 줄의 형식이 올바르지 않습니다. (7개 열 필요)`;
+                if (columns.length !== 3) {
+                    csvMessage.textContent = `오류: ${i + 1}번째 줄의 형식이 올바르지 않습니다. (3개 열 필요)`;
                     csvMessage.className = 'text-sm text-red-500 mt-2 h-4';
                     return null;
                 }
-                const [question, opt1, opt2, opt3, opt4, answerStr, explanation] = columns;
-                const answer = parseInt(answerStr, 10);
-                if (isNaN(answer) || answer < 0 || answer > 3) {
-                     csvMessage.textContent = `오류: ${i + 1}번째 줄의 정답 번호가 유효하지 않습니다. (0~3 사이)`;
+                const [question, answer, explanation] = columns;
+                if (!question || !answer || !explanation) {
+                     csvMessage.textContent = `오류: ${i + 1}번째 줄에 빈 항목이 있습니다.`;
                      csvMessage.className = 'text-sm text-red-500 mt-2 h-4';
                      return null;
                 }
-                questions.push({ question, options: [opt1, opt2, opt3, opt4], answer, explanation });
+                questions.push({ question, answer, explanation });
             }
             return questions;
         }
 
-        function initializeQuiz(data, title) {
-            activeQuizData = data;
-            currentQuestionIndex = 0;
-            userAnswers = new Array(activeQuizData.length).fill(null);
+        function initializeQuizDisplay(questions, title) {
             quizTitle.textContent = title;
+            problemDisplayArea.innerHTML = ''; // 기존 문제 지우기
+
+            questions.forEach((q, index) => {
+                const problemBlock = document.createElement('div');
+                problemBlock.className = 'problem-block border rounded-lg p-6 bg-white shadow-sm';
+                problemBlock.id = `problem-${index}`;
+                
+                // pre-wrap으로 줄바꿈 유지
+                problemBlock.innerHTML = `
+                    <h3 class="text-lg font-bold text-gray-800 mb-4" style="white-space: pre-wrap;">[문제 ${index + 1}] ${q.question}</h3>
+                    <div class="flex flex-col sm:flex-row sm:space-x-2">
+                        <input type="text" class="answer-input flex-grow border-gray-300 rounded-lg shadow-sm mb-2 sm:mb-0" placeholder="정답을 입력하세요...">
+                        <button class="btn btn-success check-answer-btn">정답 확인</button>
+                    </div>
+                    <p class="answer-result text-sm font-medium mt-3 h-5"></p>
+                    <div class="mt-4 space-x-2">
+                        <button class="btn btn-secondary toggle-explanation-btn">해설 보기</button>
+                        <button class="btn btn-warning random-problem-btn">랜덤 문제</button>
+                    </div>
+                    <p class="explanation-text bg-gray-100 p-4 rounded-lg mt-4 text-gray-700 hidden" style="white-space: pre-wrap;">
+                        <strong>해설:</strong> ${q.explanation}
+                    </p>
+                `;
+                
+                // 이 문제 블록에 대한 이벤트 리스너 연결
+                const checkBtn = problemBlock.querySelector('.check-answer-btn');
+                const toggleBtn = problemBlock.querySelector('.toggle-explanation-btn');
+                const randomBtn = problemBlock.querySelector('.random-problem-btn');
+                const inputEl = problemBlock.querySelector('.answer-input');
+                const resultEl = problemBlock.querySelector('.answer-result');
+                const explanationEl = problemBlock.querySelector('.explanation-text');
+
+                checkBtn.addEventListener('click', () => {
+                    const userAnswer = inputEl.value.trim();
+                    const correctAnswer = q.answer.trim();
+                    if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                        resultEl.textContent = '정답입니다!';
+                        resultEl.className = 'answer-result text-sm font-medium mt-3 h-5 text-green-600';
+                    } else {
+                        resultEl.textContent = `오답입니다. (정답: ${correctAnswer})`;
+                        resultEl.className = 'answer-result text-sm font-medium mt-3 h-5 text-red-600';
+                    }
+                });
+
+                toggleBtn.addEventListener('click', () => {
+                    explanationEl.classList.toggle('hidden');
+                    toggleBtn.textContent = explanationEl.classList.contains('hidden') ? '해설 보기' : '해설 숨기기';
+                });
+                
+                randomBtn.addEventListener('click', () => {
+                    const allProblems = document.querySelectorAll('.problem-block');
+                    const randomIndex = Math.floor(Math.random() * allProblems.length);
+                    allProblems[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+
+                problemDisplayArea.appendChild(problemBlock);
+            });
 
             startScreen.classList.add('hidden');
-            quizMainContainer.classList.remove('hidden');
-            resultScreen.classList.add('hidden');
-            quizScreen.classList.remove('hidden');
-            
-            loadQuestion();
+            quizDisplayScreen.classList.remove('hidden');
+            window.scrollTo(0, 0);
         }
-
-        function loadQuestion() {
-            const currentQuestion = activeQuizData[currentQuestionIndex];
-            questionCounter.textContent = `${currentQuestionIndex + 1} / ${activeQuizData.length}`;
-            progressBar.style.width = `${((currentQuestionIndex + 1) / activeQuizData.length) * 100}%`;
-            questionText.textContent = currentQuestion.question;
-            answerOptions.innerHTML = '';
-
-            currentQuestion.options.forEach((option, index) => {
-                const optionId = `q${currentQuestionIndex}-option${index}`;
-                const optionElement = document.createElement('div');
-                optionElement.innerHTML = `
-                    <input type="radio" id="${optionId}" name="question${currentQuestionIndex}" value="${index}">
-                    <label for="${optionId}" class="option-label">
-                        <span class="mr-4 font-bold">${index + 1}.</span> ${option}
-                    </label>
-                `;
-                answerOptions.appendChild(optionElement);
-                const radioBtn = optionElement.querySelector(`#${optionId}`);
-                if (userAnswers[currentQuestionIndex] === index) radioBtn.checked = true;
-                radioBtn.addEventListener('change', () => { userAnswers[currentQuestionIndex] = index; });
-            });
-            updateNavigation();
-        }
-
-        function updateNavigation() {
-            prevBtn.disabled = currentQuestionIndex === 0;
-            prevBtn.classList.toggle('opacity-50', prevBtn.disabled);
-            prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
-            if (currentQuestionIndex === activeQuizData.length - 1) {
-                nextBtn.classList.add('hidden');
-                submitBtn.classList.remove('hidden');
-            } else {
-                nextBtn.classList.remove('hidden');
-                submitBtn.classList.add('hidden');
-            }
-        }
-
-        function showResults() {
-            quizScreen.classList.add('hidden');
-            resultScreen.classList.remove('hidden');
-            let score = userAnswers.reduce((acc, answer, index) => acc + (answer === activeQuizData[index].answer ? 1 : 0), 0);
-            const totalQuestions = activeQuizData.length;
-            const percentage = totalQuestions > 0 ? ((score / totalQuestions) * 100).toFixed(1) : 0;
-            scoreText.innerHTML = `<strong class="text-blue-600">${totalQuestions}문제 중 ${score}개를 맞추셨습니다!</strong><br> 정답률: ${percentage}%`;
-
-            detailedResults.innerHTML = activeQuizData.map((question, index) => {
-                const userAnswer = userAnswers[index];
-                const correctAnswer = question.answer;
-                const isCorrect = userAnswer === correctAnswer;
-                return `
-                    <div class="border rounded-lg p-6 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
-                        <p class="font-bold text-lg mb-4">${index + 1}. ${question.question}</p>
-                        <div class="space-y-2 text-gray-700">
-                            <p><strong>정답:</strong> ${question.options[correctAnswer]}</p>
-                            <p><strong>나의 답변:</strong> ${userAnswer !== null ? question.options[userAnswer] : '선택 안 함'} 
-                                <i class="fas ${isCorrect ? 'fa-check-circle text-green-500' : 'fa-times-circle text-red-500'} ml-2"></i></p>
-                            <div class="mt-4 pt-4 border-t border-gray-200">
-                                <p class="font-semibold text-gray-800">해설</p>
-                                <p class="text-sm text-gray-600 mt-1">${question.explanation}</p>
-                            </div>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
+        
         // --- 이벤트 리스너 ---
         startSampleBtn.addEventListener('click', () => {
-            initializeQuiz(sampleQuizData, '정보처리기사 필기 (샘플)');
+            initializeQuizDisplay(sampleQuizData, '샘플 문제');
+        });
+
+        backToMainBtn.addEventListener('click', () => {
+            quizDisplayScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            renderQuizList();
         });
 
         csvFileInput.addEventListener('change', (event) => {
@@ -362,16 +321,18 @@
                 const text = e.target.result;
                 const newQuestions = parseCSV(text);
                 if (newQuestions && newQuestions.length > 0) {
+                    const newQuizSet = { name: file.name, questions: newQuestions };
                     const existingIndex = savedQuizSets.findIndex(q => q.name === file.name);
+                    
                     if (existingIndex > -1) {
-                        if (confirm(`'${file.name}' 문제집이 이미 존재합니다. 덮어쓰시겠습니까?`)) {
-                             savedQuizSets[existingIndex].questions = newQuestions;
+                        if (confirm(`'${file.name}' 문제집이 이미 존재합니다. F덮어쓰시겠습니까?`)) {
+                             savedQuizSets[existingIndex] = newQuizSet;
                         } else {
                             csvFileInput.value = '';
                             return;
                         }
                     } else {
-                        savedQuizSets.push({ name: file.name, questions: newQuestions });
+                        savedQuizSets.push(newQuizSet);
                     }
                     saveQuizSets();
                     renderQuizList();
@@ -387,38 +348,21 @@
         });
 
         quizList.addEventListener('click', (e) => {
-            const target = e.target;
+            const target = e.target.closest('button');
+            if (!target) return;
+
+            const index = parseInt(target.dataset.index, 10);
+            const quiz = savedQuizSets[index];
+
             if (target.classList.contains('start-quiz-btn')) {
-                const index = parseInt(target.dataset.index, 10);
-                const quiz = savedQuizSets[index];
-                initializeQuiz(quiz.questions, quiz.name);
+                initializeQuizDisplay(quiz.questions, quiz.name);
             } else if (target.classList.contains('delete-quiz-btn')) {
-                const index = parseInt(target.dataset.index, 10);
-                 if (confirm(`'${savedQuizSets[index].name}' 문제집을 정말 삭제하시겠습니까?`)) {
+                 if (confirm(`'${quiz.name}' 문제집을 정말 삭제하시겠습니까?`)) {
                     savedQuizSets.splice(index, 1);
                     saveQuizSets();
                     renderQuizList();
                 }
             }
-        });
-
-        nextBtn.addEventListener('click', () => {
-            if (currentQuestionIndex < activeQuizData.length - 1) loadQuestion(++currentQuestionIndex);
-        });
-        prevBtn.addEventListener('click', () => {
-            if (currentQuestionIndex > 0) loadQuestion(--currentQuestionIndex);
-        });
-        submitBtn.addEventListener('click', () => {
-            const unanswered = userAnswers.filter(a => a === null).length;
-            if (unanswered > 0 && !confirm(`${unanswered}개의 문항에 답하지 않았습니다. 정말 제출하시겠습니까?`)) return;
-            showResults();
-        });
-        restartBtn.addEventListener('click', () => {
-            initializeQuiz(activeQuizData, quizTitle.textContent);
-        });
-        homeBtn.addEventListener('click', () => {
-            quizMainContainer.classList.add('hidden');
-            startScreen.classList.remove('hidden');
         });
 
         // --- 초기화 ---
