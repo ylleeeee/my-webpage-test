@@ -515,4 +515,437 @@ function generateQuizFromWords(words) {
         let options = [...distractors, meaning];
         shuffleArray(options); 
         
-        const correctIndex = options.indexOf(
+        const correctIndex = options.indexOf(meaning);
+        
+        questions.push({
+            word, meaning, hint: hint || '', phonetic: phonetic || null,
+            question, options, correct: correctIndex, rationale
+        });
+    }
+    return questions;
+}
+
+function getCombinedQuestions() {
+    const checkedBoxes = quizList.querySelectorAll('.quiz-select-cb:checked');
+    let combinedQuestions = [];
+    let combinedNames = [];
+
+    checkedBoxes.forEach(box => {
+        const index = parseInt(box.dataset.index, 10);
+        if (index === -1) { 
+            combinedQuestions.push(...sampleQuizData);
+            combinedNames.push('기본 퀴즈');
+        } else {
+            const quiz = savedWordLists[index];
+            combinedQuestions.push(...quiz.questions);
+            combinedNames.push(quiz.name);
+        }
+    });
+    
+    return { questions: combinedQuestions, title: combinedNames.join(' + ') || '단어' };
+}
+
+// --- v4: 랭킹, 기록, 오답노트 함수 ---
+
+function loadPlayerName() {
+    currentPlayerName = localStorage.getItem(PLAYER_KEY) || '';
+    playerNameInput.value = currentPlayerName;
+}
+
+function savePlayerName(name) {
+    currentPlayerName = name;
+    localStorage.setItem(PLAYER_KEY, name);
+}
+
+// v6: 요청 2 (랭킹 시작일)
+function loadRankings() {
+    const stored = localStorage.getItem(RANKING_KEY);
+    rankings = stored ? JSON.parse(stored) : { startDate: new Date().getTime(), scores: [] }; 
+}
+
+function saveRankings() {
+    rankings.scores.sort((a, b) => b.totalScore - a.totalScore); 
+    rankings.scores = rankings.scores.slice(0, 3); 
+    localStorage.setItem(RANKING_KEY, JSON.stringify(rankings));
+}
+
+// v6: 요청 1 (랭킹 초기화)
+function resetRankings() {
+    rankings = { startDate: new Date().getTime(), scores: [] };
+    saveRankings();
+    renderRankings();
+}
+
+function renderRankings() {
+    rankingList.innerHTML = '';
+    
+    // v6: 요청 2 (랭킹 시작일)
+    const startDate = new Date(rankings.startDate);
+    const dateString = `${startDate.getFullYear()}. ${startDate.getMonth() + 1}. ${startDate.getDate()}.`;
+    
+    if (rankings.scores.length === 0) {
+        noRankingList.classList.remove('hidden');
+        noRankingList.innerHTML = `아직 랭킹이 없습니다. <span class"ranking-start-date">(기록 시작일: ${dateString})</span>`;
+    } else {
+        noRankingList.classList.add('hidden');
+        const icons = [
+            '<i class="fas fa-crown gold"></i>', 
+            '<i class="fas fa-crown silver"></i>', 
+            '<i class="fas fa-crown bronze"></i>'
+        ];
+        rankings.scores.forEach((entry, index) => {
+            const div = document.createElement('div');
+            div.className = 'ranking-item';
+            div.innerHTML = `
+                <span class="ranking-icon">${icons[index]}</span>
+                <span class="ranking-name">${entry.name}</span>
+                <span class="ranking-score">${entry.totalScore}점 (누적)</span>
+            `;
+            rankingList.appendChild(div);
+        });
+        // v6: 요청 2 (랭킹 시작일)
+        const dateP = document.createElement('p');
+        dateP.className = 'ranking-start-date text-right';
+        dateP.textContent = `(기록 시작일: ${dateString})`;
+        rankingList.appendChild(dateP);
+    }
+}
+
+// v6: 요청 2 (랭킹 5점 환산)
+function updateRankings(name, score) {
+    if (!name || score === 0) return; 
+    
+    const points = score * 5; // 5점 환산
+    
+    const existingIndex = rankings.scores.findIndex(r => r.name === name);
+    if (existingIndex > -1) {
+        rankings.scores[existingIndex].totalScore += points;
+    } else {
+        rankings.scores.push({ name: name, totalScore: points });
+    }
+    saveRankings();
+    renderRankings();
+}
+
+function loadWrongAnswerBank() {
+    const stored = localStorage.getItem(WRONG_ANSWERS_KEY);
+    wrongAnswerBank = stored ? JSON.parse(stored) : []; 
+}
+
+function saveWrongAnswerBank() {
+    localStorage.setItem(WRONG_ANSWERS_KEY, JSON.stringify(wrongAnswerBank));
+}
+
+function addWrongAnswer(question) {
+    if (!question.word) return; 
+    const existingIndex = wrongAnswerBank.findIndex(q => q.word === question.word);
+    if (existingIndex === -1) {
+        wrongAnswerBank.push(question);
+        saveWrongAnswerBank();
+    }
+}
+
+function removeWrongAnswer(question) {
+    if (!question.word) return;
+    const existingIndex = wrongAnswerBank.findIndex(q => q.word === question.word);
+    if (existingIndex > -1) {
+        wrongAnswerBank.splice(existingIndex, 1);
+        saveWrongAnswerBank();
+    }
+}
+
+function renderWrongQuizButton() {
+    const count = wrongAnswerBank.length;
+    if (count > 0) {
+        startWrongQuizBtn.disabled = false;
+        startWrongQuizBtn.innerHTML = `<i class="fas fa-redo mr-2"></i> 틀린 문제 (${count}개) 다시 풀기`;
+        wrongQuizMessage.textContent = '';
+    } else {
+        startWrongQuizBtn.disabled = true;
+        startWrongQuizBtn.innerHTML = `<i class="fas fa-redo mr-2"></i> 틀린 문제 (0개) 다시 풀기`;
+        wrongQuizMessage.textContent = '틀린 문제가 없습니다.';
+        wrongQuizMessage.className = 'text-sm mt-2 h-4 text-center text-gray-500';
+    }
+}
+
+function loadHistory() {
+    const stored = localStorage.getItem(HISTORY_KEY);
+    quizHistory = stored ? JSON.parse(stored) : [];
+}
+
+function saveHistory() {
+    quizHistory = quizHistory.slice(0, 1000); 
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(quizHistory));
+}
+
+function addHistoryEntry(entry) {
+    quizHistory.unshift(entry); 
+    saveHistory();
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+// v6: '내 기록만 보기' 필터링 기능이 추가된 renderHistory
+function renderHistory() {
+    historyList.innerHTML = '';
+
+    const showOnlyMyRecords = filterHistoryCheckbox.checked;
+    const filteredHistory = showOnlyMyRecords 
+        ? quizHistory.filter(item => item.playerName === currentPlayerName) 
+        : quizHistory;
+    
+    if (filteredHistory.length === 0) {
+        noHistoryList.classList.remove('hidden');
+        if (showOnlyMyRecords && quizHistory.length > 0) { 
+            noHistoryList.textContent = '내 학습 기록이 없습니다.';
+        } else {
+            noHistoryList.textContent = '학습 기록이 없습니다.';
+        }
+    } else {
+        noHistoryList.classList.add('hidden');
+        filteredHistory.forEach(item => { 
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            const score = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+            // 1. 이름 표시 로직
+            div.innerHTML = `
+                <span class="timestamp">${formatTimestamp(item.timestamp)}</span>
+                <div class="details">
+                    <strong>${item.quizName}</strong> (학습자: ${item.playerName || '기록 없음'})
+                    (${item.total}문제 중 ${item.correct}개 정답, ${item.wrong}개 오답)
+                    <span class="score-badge">${score}점</span>
+                </div>
+            `;
+            historyList.appendChild(div);
+        });
+    }
+}
+
+// --- v5 AI 기능 (현재 제외됨) ---
+// (이전 버전의 AI 함수는 캔버스 로딩 문제로 제외)
+
+// --- 5. 이벤트 리스너 ---
+
+startQuizBtn.addEventListener('click', () => {
+    const { questions, title } = getCombinedQuestions();
+    startQuiz(questions, title + " 퀴즈");
+});
+
+startLearnBtn.addEventListener('click', () => {
+    const { questions, title } = getCombinedQuestions();
+    startStudy(questions, title + " 학습");
+});
+
+// 퀴즈 화면
+nextBtn.addEventListener('click', handleNextButton);
+prevBtn.addEventListener('click', handlePrevButton); // v6: 이전 버튼
+retryBtn.addEventListener('click', () => startQuiz(activeQuizData, quizTitleEl.textContent)); 
+backToMainBtn.addEventListener('click', showMainScreen);
+
+// v6: 홈, 종료 버튼
+homeBtn.addEventListener('click', () => {
+    showMainScreen(); // 확인 창 없이 메인으로
+});
+quitBtn.addEventListener('click', () => {
+    showResults(true); // v6 - 요청 5: 퀴즈 중단
+});
+
+
+// v2: 플래시카드 이벤트 리스너
+// v6 - 요청 3: 스와이프 및 클릭
+flashcardScene.addEventListener('click', flipCard);
+flashcardScene.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+flashcardScene.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+cardPrevArrow.addEventListener('click', (e) => {
+    e.stopPropagation(); // 카드 뒤집기(click) 방지
+    showPrevCard();
+});
+cardNextArrow.addEventListener('click', (e) => {
+    e.stopPropagation(); // 카드 뒤집기(click) 방지
+    showNextCard();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50; // 50px 이상
+    if (touchEndX < touchStartX - swipeThreshold) {
+        cardNextArrow.click(); // v6: 다음 버튼 클릭으로 연동
+    } else if (touchEndX > touchStartX + swipeThreshold) {
+        cardPrevArrow.click(); // v6: 이전 버튼 클릭으로 연동
+    }
+}
+
+exitStudyBtn.addEventListener('click', showStudySummary);
+startQuizFromSummaryBtn.addEventListener('click', () => startQuiz(activeStudyData, flashcardTitle.textContent + " 퀴즈"));
+mainFromSummaryBtn.addEventListener('click', showMainScreen);
+
+// v3: 단어장 목록 및 생성 이벤트 리스너
+quizList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('quiz-select-cb')) {
+        const checkedBoxes = quizList.querySelectorAll('.quiz-select-cb:checked');
+        if (checkedBoxes.length > 0) {
+            startLearnBtn.disabled = false;
+            startQuizBtn.disabled = false;
+            selectionMessage.textContent = `${checkedBoxes.length}개 단어장 선택됨`;
+        } else {
+            startLearnBtn.disabled = true;
+            startQuizBtn.disabled = true;
+            selectionMessage.textContent = '';
+        }
+    }
+});
+
+quizList.addEventListener('click', (e) => {
+    const target = e.target.closest('.delete-quiz-btn');
+    if (target) {
+        const index = parseInt(target.dataset.index, 10);
+        savedWordLists.splice(index, 1);
+        saveWordLists();
+        renderWordList();
+        startLearnBtn.disabled = true; 
+        startQuizBtn.disabled = true;
+        selectionMessage.textContent = '';
+    }
+});
+
+// 아코디언 메뉴 (접기/펼치기)
+accordionHeaderNewQuiz.addEventListener('click', () => {
+    accordionHeaderNewQuiz.classList.toggle('open');
+    accordionContentNewQuiz.classList.toggle('open');
+});
+
+addWordBtn.addEventListener('click', () => {
+    const word = newWordInput.value.trim();
+    const meaning = newMeaningInput.value.trim();
+    const phonetic = newPhoneticInput.value.trim(); // v4
+
+    if (word && meaning) {
+        if (tempWords.find(w => w.word.toLowerCase() === word.toLowerCase())) {
+            manualAddMessage.textContent = `'${word}'는(은) 이미 추가된 단어입니다.`;
+            manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+            return;
+        }
+        tempWords.push({ word, meaning, hint: '', phonetic: phonetic || null });
+        renderTempWordList();
+        newWordInput.value = '';
+        newMeaningInput.value = '';
+        newPhoneticInput.value = '';
+        newWordInput.focus();
+        manualAddMessage.textContent = `'${word}' 단어가 추가되었습니다.`;
+        manualAddMessage.className = 'text-sm text-green-600 mt-2 h-4';
+    } else {
+        manualAddMessage.textContent = '단어와 의미를 모두 입력해주세요.';
+        manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+    }
+});
+
+tempWordListDiv.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.delete-temp-word-btn');
+    if (deleteBtn) {
+        const wordToDelete = deleteBtn.dataset.word;
+        tempWords = tempWords.filter(w => w.word !== wordToDelete);
+        renderTempWordList();
+        manualAddMessage.textContent = `'${wordToDelete}' 단어가 삭제되었습니다.`;
+        manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+    }
+});
+
+saveNewQuizBtn.addEventListener('click', () => {
+    const name = newQuizNameInput.value.trim();
+    if (!name) {
+        manualAddMessage.textContent = '단어장 이름을 입력해주세요.';
+        manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+        return;
+    }
+    if (tempWords.length < 4) {
+        manualAddMessage.textContent = '퀴즈 생성을 위해 최소 4개의 단어가 필요합니다.';
+        manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+        return;
+    }
+    const newQuestions = generateQuizFromWords(tempWords);
+    const newQuizSet = { name, questions: newQuestions };
+    const existingIndex = savedWordLists.findIndex(q => q.name === name);
+    if (existingIndex > -1) {
+         savedWordLists[existingIndex] = newQuizSet;
+         manualAddMessage.textContent = `'${name}' 단어장을 덮어썼습니다.`;
+         manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+    } else {
+        savedWordLists.push(newQuizSet);
+         manualAddMessage.textContent = `'${name}' 단어장이 저장되었습니다!`;
+         manualAddMessage.className = 'text-sm text-green-600 mt-2 h-4';
+    }
+    saveWordLists();
+    renderWordList();
+    tempWords = [];
+    newQuizNameInput.value = '';
+    renderTempWordList();
+});
+
+// --- v4: 랭킹, 기록, 오답노트 리스너 ---
+
+playerNameInput.addEventListener('change', (e) => {
+    savePlayerName(e.target.value);
+});
+
+// v6: 요청 1 (랭킹 초기화)
+rankingResetBtn.addEventListener('click', () => {
+    resetRankings();
+});
+
+accordionHeaderOndap.addEventListener('click', () => {
+    accordionHeaderOndap.classList.toggle('open');
+    accordionContentOndap.classList.toggle('open');
+});
+
+accordionHeaderHistory.addEventListener('click', () => {
+    accordionHeaderHistory.classList.toggle('open');
+    accordionContentHistory.classList.toggle('open');
+});
+
+startWrongQuizBtn.addEventListener('click', () => {
+    if (wrongAnswerBank.length === 0) {
+        wrongQuizMessage.textContent = '다시 풀 틀린 문제가 없습니다.';
+        wrongQuizMessage.className = 'text-sm mt-2 h-4 text-center text-red-500';
+        return;
+    }
+    let questionsToQuiz = [...wrongAnswerBank];
+    shuffleArray(questionsToQuiz);
+    startQuiz(questionsToQuiz, "틀린 문제 퀴즈");
+});
+
+clearHistoryBtn.addEventListener('click', () => {
+    quizHistory = [];
+    saveHistory();
+    renderHistory();
+});
+
+// v6: '내 기록만 보기' 필터 체크박스 리스너 추가
+if (filterHistoryCheckbox) {
+    filterHistoryCheckbox.addEventListener('change', () => {
+        renderHistory(); // 체크박스 상태가 바뀌면 기록 목록을 다시 그림
+    });
+}
+
+// --- 6. 초기화 ---
+// DOM이 모두 로드된 후 스크립트가 실행되도록 보장
+document.addEventListener('DOMContentLoaded', () => {
+    loadWordLists();
+    loadPlayerName();
+    loadRankings();
+    loadWrongAnswerBank();
+    loadHistory();
+    
+    renderWordList();
+    renderRankings();
+    renderWrongQuizButton();
+    renderHistory();
+    renderTempWordList(); 
+});
