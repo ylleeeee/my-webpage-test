@@ -275,13 +275,6 @@ function renderWordList() {
   }
 
   // 4) “저장된 단어장이 없습니다” 표시 토글
-  const hasAnyList = (builtinSets.length > 0) || (savedWordLists.length > 0);
-  if (hasAnyList) {
-    noQuizList.classList.add('hidden');
-  } else {
-    noQuizList.classList.remove('hidden');
-  }
-
 
   const hasAny = builtinSets.length > 0 || (savedWordLists && savedWordLists.length > 0);
   if (hasAny) noQuizList.classList.add('hidden');
@@ -419,7 +412,7 @@ function startStudy(data, title="단어 학습"){
     selectionMessage.textContent='학습을 시작하려면 단어를 1개 이상 선택하세요.';
     selectionMessage.className='muted'; return;
   }
-  activeStudyData = data.map(q=>({...q}));
+  activeStudyData = data.mapㄹ채(q=>({...q}));
   shuffleArray(activeStudyData);
   currentCardIndex=0;
 
