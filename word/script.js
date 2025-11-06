@@ -109,7 +109,7 @@ const exitStudyBtn = document.getElementById('exit-study-btn');
 const studyCompleteContainer = document.getElementById('study-complete-container');
 const studySummaryList = document.getElementById('study-summary-list');
 const startQuizFromSummaryBtn = document.getElementById('start-quiz-from-summary-btn');
-const mainFromSummaryBtn2 = document.getElementById('main-from-summary-btn2');
+const mainFromSummaryBtn = document.getElementById('main-from-summary-btn');
 const cardPrevArrow = document.getElementById('card-prev-arrow');
 const cardNextArrow = document.getElementById('card-next-arrow');
 
