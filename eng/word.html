@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 단어 암기 (v6 - 파일 분리)</title>
+    
+    <!-- 외부 파일 링크 -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 라이브러리 (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- 1. 시작 화면 -->
+    <div id="start-screen" class="container">
+        <div class="p-8">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6">영어 단어 암기 (v6)</h1>
+            </div>
+            
+            <div class="mb-6">
+                <label for="player-name" class="block text-sm font-medium text-gray-700">학습자 이름</label>
+                <input type="text" id="player-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="이름을 입력하세요 (랭킹/기록용)">
+            </div>
+            
+            <div class="border p-6 rounded-lg bg-gray-50 mb-6">
+                <h2 class="text-xl font-bold text-gray-700 mb-3">
+                    <i class="fas fa-trophy mr-2 text-yellow-500"></i> 학습 랭킹
+                </h2>
+                <div id="ranking-list" class="space-y-2"></div>
+                 <p id="no-ranking-list" class="text-sm text-gray-500 text-center py-2 hidden">아직 랭킹이 없습니다.</p>
+            </div>
+            
+            <div class="border p-6 rounded-lg bg-gray-50">
+                <h2 class="text-xl font-bold text-gray-700 mb-3">단어장 목록</h2>
+                <p class="text-sm text-gray-500 mb-4">학습할 단어장을 선택하세요. (1개 이상)</p>
+                <div id="quiz-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto"></div>
+                 <p id="no-quiz-list" class="text-sm text-gray-500 text-center py-4 hidden">저장된 단어장이 없습니다.</p>
+                <div class="flex space-x-2">
+                    <button id="start-learn-btn" class="btn btn-secondary w-1/2" disabled>
+                        <i class="fas fa-book-open mr-2"></i> 단어 학습
+                    </button>
+                    <button id="start-quiz-btn" class="btn btn-primary w-1/2" disabled>
+                        <i class="fas fa-pencil-alt mr-2"></i> 단어 퀴즈
+                    </button>
+                </div>
+                <p id="selection-message" class="text-sm mt-2 h-4 text-center text-blue-600"></p>
+            </div>
+        </div>
+        
+        <div class="accordion-container border-t">
+            <div id="accordion-header-ondap" class="accordion-header">
+                <h2>오답노트</h2>
+                <i class="fas fa-chevron-down accordion-icon"></i>
+            </div>
+            <div id="accordion-content-ondap" class="accordion-content">
+                <p class="text-sm text-gray-500 mb-4">지금까지 틀렸던 문제들만 모아서 다시 풀어볼 수 있습니다.</p>
+                <button id="start-wrong-quiz-btn" class="btn btn-warning w-full" disabled>
+                    <i class="fas fa-redo mr-2"></i> 틀린 문제 (0개) 다시 풀기
+                </button>
+                <p id="wrong-quiz-message" class="text-sm mt-2 h-4 text-center"></p>
+            </div>
+        </div>
+        
+        <div class="accordion-container">
+            <div id="accordion-header-new-quiz" class="accordion-header">
+                <h2>새 단어장 직접 만들기</h2>
+                <i class="fas fa-chevron-down accordion-icon"></i>
+            </div>
+            <div id="accordion-content-new-quiz" class="accordion-content">
+                
+                <div class="border p-4 rounded-lg bg-blue-50 mb-6">
+                    <h3 class="text-md font-bold text-gray-700 mb-2">이미지에서 단어 가져오기 (AI)</h3>
+                    <p class="text-sm text-gray-600 mb-3">단어와 의미가 포함된 이미지를 업로드하세요.</p>
+                    <input type="file" id="ocr-image-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200" accept="image/*">
+                    <button id="ocr-extract-btn" class="btn btn-primary w-full mt-3">
+                        <i class="fas fa-magic mr-2"></i> 텍스트 추출
+                    </button>
+                    <p id="ocr-message" class="text-sm mt-2 h-4"></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="new-quiz-name" class="block text-sm font-medium text-gray-700">단어장 이름</label>
+                    <input type="text" id="new-quiz-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="예: 토익 필수 단어 1">
+                </div>
+
+                <div class="p-4 border rounded-lg bg-white mb-4">
+                    <h3 class="text-md font-medium text-gray-700 mb-2">추가된 단어 목록 (<span id="temp-word-count">0</span>/4개 이상)</h3>
+                    <div id="temp-word-list" class="max-h-24 overflow-y-auto text-sm text-gray-600 space-y-1">
+                        <p class="text-gray-400">단어를 추가해주세요...</p>
+                    </div>
+                </div>
+
+                <div id="add-word-form" class="space-y-3">
+                    <div class="relative">
+                        <input type="text" id="new-word" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="영어 단어 (예: apple)">
+                    </div>
+                    <input type="text" id="new-meaning" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="한국어 의미 (예: 사과)">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="new-phonetic" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="발음 기호 (선택)">
+                        <button id="fetch-phonetic-btn" class="btn btn-xs btn-secondary">
+                            <i class="fas fa-search mr-1"></i> 자동 검색
+                        </button>
+                        <div id="phonetic-loader" class="loader"></div>
+                    </div>
+                    <button id="add-word-btn" class="btn btn-secondary w-full"><i class="fas fa-plus mr-2"></i>단어 추가</button>
+                </div>
+
+                <button id="save-new-quiz-btn" class="btn btn-primary w-full mt-4"><i class="fas fa-save mr-2"></i>이 단어장 저장하기</button>
+                <p id="manual-add-message" class="text-sm mt-2 h-4"></p>
+            </div>
+        </div>
+        
+        <div class="accordion-container">
+            <div id="accordion-header-history" class="accordion-header">
+                <h2>전체 학습 기록</h2>
+                <i class="fas fa-chevron-down accordion-icon"></i>
+            </div>
+            <div id="accordion-content-history" class="accordion-content">
+                <button id="clear-history-btn" class="btn btn-sm btn-danger w-full mb-4">
+                    <i class="fas fa-trash-alt mr-2"></i> 모든 기록 지우기
+                </button>
+                 <div id="history-list" class="space-y-2 max-h-64 overflow-y-auto pr-2"></div>
+                 <p id="no-history-list" class="text-sm text-gray-500 text-center py-4 hidden">학습 기록이 없습니다.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 2. 단어 학습 (플래시카드) 화면 -->
+    <div class="container flashcard-container" id="flashcard-container">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="flashcard-title" class="text-xl font-bold">단어 학습</h2>
+            <button id="exit-study-btn" class="btn btn-secondary btn-sm">학습 종료</button>
+        </div>
+        <div class="flashcard-scene" id="flashcard-scene">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-face flashcard-front" id="flashcard-front"></div>
+                <div class="flashcard-face flashcard-back" id="flashcard-back"></div>
+            </div>
+        </div>
+        <div id="flashcard-progress" class="text-center"></div>
+        <div class="flex justify-between mt-6">
+            <button id="prev-card-btn" class="btn btn-secondary">이전 카드</button>
+            <button id="next-card-btn" class="btn btn-primary">다음 카드</button>
+        </div>
+    </div>
+
+    <!-- 3. 학습 완료 화면 -->
+    <div class="container study-complete-container" id="study-complete-container">
+        <h2 class="text-2xl font-bold text-center mb-4">학습 완료!</h2>
+        <p class="text-gray-700 mb-4">다음 단어들을 모두 학습했습니다:</p>
+        <ul id="study-summary-list" class="mb-6"></ul>
+        <p class="text-center text-lg font-medium text-gray-800 mb-6">
+            단어 퀴즈에 도전해 볼까요?
+        </p>
+        <div class="space-y-3">
+            <button id="start-quiz-from-summary-btn" class="btn btn-primary w-full">퀴즈 도전!</button>
+            <button id="main-from-summary-btn" class="btn btn-secondary w-full">메인으로</button>
+        </div>
+    </div>
+
+
+    <!-- 4. 퀴즈 화면 (요청사항 1번 반영) -->
+    <div class="container quiz-container" id="quiz-container">
+        <div class="quiz-header">
+            <h2 id="quiz-title">기본 퀴즈</h2>
+            <span id="progress"></span>
+        </div>
+        <div id="quiz-content">
+            <div class="question-text" id="question"></div>
+            <div id="options"></div>
+            <div class="rationale" id="rationale"></div>
+            
+            <!-- (요청 1) 이전/다음 버튼 -->
+            <div class="flex space-x-2 w-full mt-4">
+                 <button id="prev-btn" class="btn btn-secondary w-1/2">이전</button>
+                 <button id="next-btn" class="btn btn-primary w-1/2">다음</button>
+            </div>
+        </div>
+        
+        <div class="result-container" id="result">
+            <h2>퀴즈 완료!</h2>
+            <div class="score-text" id="score-display"></div>
+            <div id="wrong-answers-list"></div>
+            <div class="mt-8">
+                <button id="retry-btn" class="btn btn-success">다시 풀기</button>
+                <button id="back-to-main-btn" class="btn btn-secondary">메인으로</button>
+            </div>
+        </div>
+
+        <!-- (요청 1) 홈/종료 버튼 푸터 -->
+        <div id="quiz-footer">
+            <button id="home-btn" title="메인으로 돌아가기">
+                <i class="fas fa-home"></i>
+            </button>
+            <button id="quit-btn" title="퀴즈 종료하기">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 외부 스크립트 파일 링크 -->
+    <script src="script.js" defer></script>
+</body>
+</html>
