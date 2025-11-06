@@ -412,7 +412,7 @@ function startStudy(data, title="단어 학습"){
     selectionMessage.textContent='학습을 시작하려면 단어를 1개 이상 선택하세요.';
     selectionMessage.className='muted'; return;
   }
-  activeStudyData = data.mapㄹ채(q=>({...q}));
+  activeStudyData = data.map(q=>({...q}));
   shuffleArray(activeStudyData);
   currentCardIndex=0;
 
