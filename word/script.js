@@ -309,18 +309,21 @@ function formatCreationDate(ts){ if(!ts) return ''; const d=new Date(ts); return
 
 // ✅ 정상 버전 (전체 교체)
 function renderWordList() {
+  if (!quizList) return;
+
+  // 1) 초기화
   quizList.innerHTML = '';
 
   const builtinSets = getBuiltinQuizSets();
 
-  // 1) 기본 세트 렌더
+  // 2) 기본 세트 렌더(편집/삭제 버튼 비활성)
   builtinSets.forEach((set, idx) => {
     const item = document.createElement('div');
     item.className = 'flex items-center p-3 bg-white border rounded-lg';
     item.innerHTML = `
       <input type="checkbox" class="quiz-select-cb" id="quiz-cb-builtin-${idx}" data-index="${set.key}">
       <label for="quiz-cb-builtin-${idx}" class="quiz-item-label">
-        <span>${set.name} (${set.data.length}문제)</span>
+        <span>${set.name} (${(set.data || []).length}문제)</span>
       </label>
       <div class="quiz-item-buttons">
         <button class="btn btn-xs btn-secondary" disabled title="기본 단어장은 편집할 수 없습니다.">
@@ -331,6 +334,45 @@ function renderWordList() {
         </button>
       </div>
     `;
+    quizList.appendChild(item);
+  });
+
+  // 3) 사용자 저장본 렌더
+  if (Array.isArray(savedWordLists) && savedWordLists.length > 0) {
+    savedWordLists.forEach((quiz, index) => {
+      const it = document.createElement('div');
+      it.className = 'flex items-center p-3 bg-white border rounded-lg';
+      const creationDate = formatCreationDate(quiz.creationDate);
+      it.innerHTML = `
+        <input type="checkbox" class="quiz-select-cb" id="quiz-cb-${index}" data-index="${index}">
+        <label for="quiz-cb-${index}" class="quiz-item-label">
+          <span>${quiz.name} (${quiz.questions.length}문제)</span>
+          ${creationDate ? `<div class="quiz-item-date">${creationDate}</div>` : ''}
+        </label>
+        <div class="quiz-item-buttons">
+          <button class="btn btn-xs btn-secondary edit-quiz-btn" data-index="${index}" title="단어장 편집">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+          <button class="btn btn-xs btn-danger delete-quiz-btn" data-index="${index}" title="단어장 삭제">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      `;
+      quizList.appendChild(it);
+    });
+  }
+
+  // 4) 안내 문구 토글
+  const hasAnyList = (builtinSets.length > 0) || (savedWordLists && savedWordLists.length > 0);
+  if (hasAnyList) noQuizList.classList.add('hidden');
+  else noQuizList.classList.remove('hidden');
+
+  // 5) 버튼 기본 비활성화 & 메시지 초기화
+  startLearnBtn.disabled = true;
+  startQuizBtn.disabled = true;
+  startRandomQuizBtn.disabled = true;
+  selectionMessage.textContent = '';
+}
     quizList.appendChild(item);
   });
 
@@ -554,26 +596,22 @@ quizList.addEventListener('click', e => {
 
   const index = parseInt(btn.dataset.index, 10);
 
-  // 🔹 단어장 삭제 버튼 클릭 시 확인창 띄우기
   if (btn.classList.contains('delete-quiz-btn')) {
     const quiz = savedWordLists[index];
-    const quizName = quiz?.name || '이 단어장';
-    const confirmed = window.confirm(`'${quizName}' 단어장을 삭제하겠습니까?`);
+    const name = quiz?.name || '이 단어장';
+    const ok = window.confirm(`'${name}' 단어장을 삭제하겠습니까?`);
+    if (!ok) return;
 
-    if (!confirmed) return; // 취소 시 중단
-
-    // 확인 시 삭제 실행
     savedWordLists.splice(index, 1);
     saveWordLists();
     renderWordList();
-
-    // 버튼 상태 초기화
-    startLearnBtn.disabled = true;
-    startQuizBtn.disabled = true;
-    startRandomQuizBtn.disabled = true;
-    selectionMessage.textContent = '';
     return;
   }
+
+  if (btn.classList.contains('edit-quiz-btn')) {
+    openEditModal(index);
+  }
+});
 
   // 🔹 단어장 편집 버튼 클릭 시
   if (btn.classList.contains('edit-quiz-btn')) {
