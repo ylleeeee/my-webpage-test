@@ -163,6 +163,27 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+/* --- v6: 학습 기록 필터 --- */
+.history-filter-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+#filter-history-checkbox {
+    margin-right: 0.5rem;
+    width: 16px; 
+    height: 16px;
+    accent-color: #3b82f6; /* 기존 파란색 테마 사용 */
+    cursor: pointer;
+}
+.history-filter-container label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #374151; /* 어두운 회색 글씨 */
+    cursor: pointer;
+}
+
 /* v6: 퀴즈 푸터 스타일 (요청 1) */
 #quiz-footer {
     border-top: 1px solid #e5e7eb;
