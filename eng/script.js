@@ -36,6 +36,8 @@ const questionEl = document.getElementById('question');
 const optionsEl = document.getElementById('options');
 const rationaleEl = document.getElementById('rationale');
 const nextBtn = document.getElementById('next-btn');
+
+// v6: 퀴즈 화면 버튼 추가
 const prevBtn = document.getElementById('prev-btn');
 const homeBtn = document.getElementById('home-btn');
 const quitBtn = document.getElementById('quit-btn');
@@ -50,13 +52,13 @@ const backToMainBtn = document.getElementById('back-to-main-btn');
 // v2: 플래시카드 DOM 요소
 const startLearnBtn = document.getElementById('start-learn-btn');
 const flashcardContainer = document.getElementById('flashcard-container');
-const flashcardScene = document.getElementById('flashcard-scene'); // 3. 수정
 const flashcard = document.getElementById('flashcard');
 const flashcardTitle = document.getElementById('flashcard-title');
 const flashcardFront = document.getElementById('flashcard-front');
 const flashcardBack = document.getElementById('flashcard-back');
 const flashcardProgress = document.getElementById('flashcard-progress');
-// 3. 'prevCardBtn', 'nextCardBtn' 삭제
+const prevCardBtn = document.getElementById('prev-card-btn');
+const nextCardBtn = document.getElementById('next-card-btn');
 const exitStudyBtn = document.getElementById('exit-study-btn');
 const studyCompleteContainer = document.getElementById('study-complete-container');
 const studySummaryList = document.getElementById('study-summary-list');
@@ -74,6 +76,7 @@ const tempWordListDiv = document.getElementById('temp-word-list');
 const tempWordCountSpan = document.getElementById('temp-word-count');
 const newWordInput = document.getElementById('new-word');
 const newMeaningInput = document.getElementById('new-meaning');
+// const newHintInput = document.getElementById('new-hint'); // v5: phonetic으로 대체
 const addWordBtn = document.getElementById('add-word-btn');
 const saveNewQuizBtn = document.getElementById('save-new-quiz-btn');
 const manualAddMessage = document.getElementById('manual-add-message');
@@ -82,7 +85,6 @@ const manualAddMessage = document.getElementById('manual-add-message');
 const playerNameInput = document.getElementById('player-name');
 const rankingList = document.getElementById('ranking-list');
 const noRankingList = document.getElementById('no-ranking-list');
-const rankingResetBtn = document.getElementById('ranking-reset-btn'); // 1. 추가
 
 const accordionHeaderOndap = document.getElementById('accordion-header-ondap');
 const accordionContentOndap = document.getElementById('accordion-content-ondap');
@@ -94,6 +96,8 @@ const accordionContentHistory = document.getElementById('accordion-content-histo
 const historyList = document.getElementById('history-list');
 const noHistoryList = document.getElementById('no-history-list');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+// v6: '내 기록만 보기' 필터 DOM 요소
 const filterHistoryCheckbox = document.getElementById('filter-history-checkbox');
 
 // v5: OCR, 발음 검색 DOM 요소
@@ -117,13 +121,13 @@ let autoFlipTimer;
 
 // v3: 단어장 저장 변수
 let savedWordLists = [];
-const STORAGE_KEY = 'englishQuizLists_v5';
+const STORAGE_KEY = 'englishQuizLists_v5'; // v5로 키 변경
 let tempWords = []; 
 
 // v4: 랭킹, 기록, 오답노트 변수
 let currentPlayerName = '';
 const PLAYER_KEY = 'englishQuizPlayer_v5';
-let rankings = []; // 2. 구조 변경: { name, totalScore, startDate }
+let rankings = []; 
 const RANKING_KEY = 'englishQuizRankings_v5';
 let wrongAnswerBank = []; 
 const WRONG_ANSWERS_KEY = 'englishQuizWrongAnswers_v5';
@@ -169,9 +173,9 @@ function loadQuestion() {
     const currentQuestion = activeQuizData[currentQuestionIndex];
     
     progressEl.textContent = `문제 ${currentQuestionIndex + 1} / ${activeQuizData.length}`;
-    // 4. 퀴즈 UI 변경: 단어만 표시
-    questionEl.textContent = currentQuestion.word; 
+    questionEl.textContent = currentQuestion.question;
     
+    // v6: 이전 버튼 상태 관리
     prevBtn.disabled = (currentQuestionIndex === 0);
     
     currentQuestion.options.forEach((option, index) => {
@@ -182,6 +186,7 @@ function loadQuestion() {
         button.addEventListener('click', selectAnswer);
         optionsEl.appendChild(button);
         
+        // v6: 이미 푼 문제 상태 복원
         if (currentQuestion.answered) {
             if (index === currentQuestion.correct) {
                 button.classList.add('correct');
@@ -192,6 +197,7 @@ function loadQuestion() {
         }
     });
 
+    // v6: 이미 푼 문제 상태 복원
     if (currentQuestion.answered) {
         if (currentQuestion.rationale) {
             rationaleEl.textContent = currentQuestion.rationale;
@@ -209,7 +215,7 @@ function resetState() {
     rationaleEl.style.display = 'none';
     rationaleEl.textContent = '';
     nextBtn.disabled = true;
-    prevBtn.disabled = true; 
+    prevBtn.disabled = true; // v6: 이전 버튼 비활성화
 }
 
 function selectAnswer(e) {
@@ -245,35 +251,26 @@ function selectAnswer(e) {
     }
     
     nextBtn.disabled = false;
-    prevBtn.disabled = (currentQuestionIndex === 0); 
+    prevBtn.disabled = (currentQuestionIndex === 0); // v6: 이전 버튼 활성화
 }
 
-// 5. 'isQuit' 파라미터 추가
-function showResults(isQuit = false) { 
+function showResults() {
     quizContentEl.style.display = 'none';
     resultEl.style.display = 'block';
+    scoreDisplayEl.textContent = `총 ${activeQuizData.length}문제 중 ${score}개를 맞추셨습니다!`;
 
-    // 5. 푼 문제 수 계산
-    const answeredQuestions = activeQuizData.filter(q => q.answered).length;
-    const total = isQuit ? answeredQuestions : activeQuizData.length;
-    
-    scoreDisplayEl.textContent = `총 ${total}문제 중 ${score}개를 맞추셨습니다!`;
-
+    const total = activeQuizData.length;
     if (total > 0) {
         const historyEntry = {
             timestamp: new Date().getTime(),
-            playerName: currentPlayerName, 
+            playerName: currentPlayerName, // 1. 학습자 이름 추가
             quizName: quizTitleEl.textContent,
-            total: total, // 5. 푼 문제 수로 저장
+            total: total,
             correct: score,
             wrong: total - score
         };
         addHistoryEntry(historyEntry);
-        
-        // 5. 퀴즈를 끝까지 다 풀었을 때만 랭킹 점수 업데이트
-        if (!isQuit) {
-            updateRankings(currentPlayerName, score);
-        }
+        updateRankings(currentPlayerName, score);
     }
 
     wrongAnswersListDiv.innerHTML = ''; 
@@ -302,10 +299,11 @@ function handleNextButton() {
     if (currentQuestionIndex < activeQuizData.length) {
         loadQuestion();
     } else {
-        showResults(false); // 5. isQuit = false
+        showResults();
     }
 }
 
+// v6: 이전 문제 함수
 function handlePrevButton() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
@@ -336,13 +334,13 @@ function loadCard(index) {
     if (autoFlipTimer) clearTimeout(autoFlipTimer);
     const card = activeStudyData[index];
     
+    // v5: 발음 기호 표시
     flashcardFront.innerHTML = `
         <div class="text-4xl md:text-5xl font-bold">${card.word}</div>
         <div class="text-xl md:text-2xl text-gray-500 mt-3">
             ${card.phonetic ? card.phonetic : '&nbsp;'} 
         </div>
-        <!-- 3. 안내 문구 수정 -->
-        <div class="text-lg text-gray-400 mt-4">(클릭: 뒤집기, 좌우: 이동)</div>
+        <div class="text-lg text-gray-400 mt-4">(클릭하여 뒤집기)</div>
     `;
     flashcardBack.innerHTML = `
         <div class="text-3xl md:text-4xl font-bold">${card.meaning}</div>
@@ -351,7 +349,7 @@ function loadCard(index) {
     
     flashcard.classList.remove('is-flipped'); 
     flashcardProgress.textContent = `카드 ${index + 1} / ${activeStudyData.length}`;
-    // 3. prev/next 버튼 disabled 로직 삭제
+    prevCardBtn.disabled = (index === 0);
     
     autoFlipTimer = setTimeout(() => {
         flipCard();
@@ -379,24 +377,6 @@ function showPrevCard() {
     }
 }
 
-// 3. 플래시카드 클릭/네비게이션 로직
-function handleCardClick(e) {
-    const cardRect = flashcardScene.getBoundingClientRect();
-    const clickX = e.clientX - cardRect.left;
-    const cardWidth = cardRect.width;
-
-    if (clickX < cardWidth * 0.3) {
-        // 왼쪽 30% 클릭: 이전
-        showPrevCard();
-    } else if (clickX > cardWidth * 0.7) {
-        // 오른쪽 30% 클릭: 다음
-        showNextCard();
-    } else {
-        // 가운데 40% 클릭: 뒤집기
-        flipCard();
-    }
-}
-
 function showStudySummary() {
     flashcardContainer.style.display = 'none';
     studyCompleteContainer.style.display = 'block';
@@ -420,7 +400,8 @@ function showMainScreen() {
     renderRankings();
     renderWrongQuizButton();
     
-    if (filterHistoryCheckbox) { 
+    // v6: 필터 체크박스 초기화
+    if (filterHistoryCheckbox) { // DOM이 로드되었는지 확인
         filterHistoryCheckbox.checked = false;
     }
     renderHistory();
@@ -498,10 +479,10 @@ function generateQuizFromWords(words) {
     const allMeanings = words.map(w => w.meaning);
 
     for (const wordData of words) {
+        // v5: phonetic 추가
         const { word, meaning, hint, phonetic } = wordData;
         
-        // 4. 퀴즈 UI 변경: 질문 형식을 단어만으로 변경 (데이터는 유지)
-        const question = word; // 4.
+        const question = `다음 단어 '${word}'의 올바른 한국어 의미는 무엇인가요?`;
         const rationale = `'${word}' (${phonetic || 'N/A'})은(는) '${meaning}'을(를) 의미합니다.`;
         
         let distractors = allMeanings.filter(m => m !== meaning);
@@ -524,7 +505,7 @@ function generateQuizFromWords(words) {
         const correctIndex = options.indexOf(meaning);
         
         questions.push({
-            word, meaning, hint: hint || '', phonetic: phonetic || null,
+            word, meaning, hint: hint || '', phonetic: phonetic || null, // v5: phonetic 저장
             question, options, correct: correctIndex, rationale
         });
     }
@@ -548,20 +529,7 @@ function getCombinedQuestions() {
         }
     });
     
-    // 4. 퀴즈 UI 변경: 기본 퀴즈 데이터도 변환
-    const transformedQuestions = combinedQuestions.map(q => {
-        // 이미 'question'이 'word'와 같다면 (직접 만든 단어장) 변환 불필요
-        if (q.question === q.word) {
-            return q;
-        }
-        // 기본 퀴즈 데이터(sampleQuizData) 변환
-        return {
-            ...q,
-            question: q.word // 4. 질문을 '단어'로 설정
-        };
-    });
-    
-    return { questions: transformedQuestions, title: combinedNames.join(' + ') || '단어' };
+    return { questions: combinedQuestions, title: combinedNames.join(' + ') || '단어' };
 }
 
 // --- v4: 랭킹, 기록, 오답노트 함수 ---
@@ -601,12 +569,9 @@ function renderRankings() {
         rankings.forEach((entry, index) => {
             const div = document.createElement('div');
             div.className = 'ranking-item';
-            // 2. 랭킹 시작일 표시
-            const startDateStr = entry.startDate ? formatTimestamp(entry.startDate, true) : 'N/A';
-            
             div.innerHTML = `
                 <span class="ranking-icon">${icons[index]}</span>
-                <span class="ranking-name">${entry.name} <span class="ranking-start-date">(since ${startDateStr})</span></span>
+                <span class="ranking-name">${entry.name}</span>
                 <span class="ranking-score">${entry.totalScore}점 (누적)</span>
             `;
             rankingList.appendChild(div);
@@ -617,18 +582,13 @@ function renderRankings() {
 function updateRankings(name, score) {
     if (!name || score === 0) return; 
     
-    const points = score * 5; 
+    const points = score * 5; // 2. 5점 환산
     
     const existingIndex = rankings.findIndex(r => r.name === name);
     if (existingIndex > -1) {
-        rankings[existingIndex].totalScore += points; 
+        rankings[existingIndex].totalScore += points; // 2. 수정
     } else {
-        // 2. 랭킹 시작일 추가
-        rankings.push({ 
-            name: name, 
-            totalScore: points, 
-            startDate: new Date().getTime() 
-        });
+        rankings.push({ name: name, totalScore: points }); // 2. 수정
     }
     saveRankings();
     renderRankings();
@@ -690,36 +650,25 @@ function addHistoryEntry(entry) {
     saveHistory();
 }
 
-// 2. formatTimestamp 수정 (날짜만 반환하는 옵션 추가)
-function formatTimestamp(timestamp, dateOnly = false) {
+function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
     const days = ['일', '월', '화', '수', '목', '금', '토'];
-    
-    const yyyy = date.getFullYear();
-    const mm = date.getMonth() + 1;
-    const dd = date.getDate();
-    const day = days[date.getDay()];
-    
-    if (dateOnly) {
-        return `${yyyy}.${mm}.${dd}`; // 2.
-    }
-    
-    const hh = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${yyyy}. ${mm}. ${dd}.(${day}) ${hh}:${min}`;
+    return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+// v6: '내 기록만 보기' 필터링 기능이 추가된 renderHistory
 function renderHistory() {
     historyList.innerHTML = '';
 
+    // 1. 필터링 로직 추가
     const showOnlyMyRecords = filterHistoryCheckbox.checked;
     const filteredHistory = showOnlyMyRecords 
         ? quizHistory.filter(item => item.playerName === currentPlayerName) 
         : quizHistory;
     
-    if (filteredHistory.length === 0) { 
+    if (filteredHistory.length === 0) { // 1. filteredHistory로 변경
         noHistoryList.classList.remove('hidden');
+        // 1. 필터링 결과에 따라 다른 메시지 표시
         if (showOnlyMyRecords && quizHistory.length > 0) { 
             noHistoryList.textContent = '내 학습 기록이 없습니다.';
         } else {
@@ -727,10 +676,12 @@ function renderHistory() {
         }
     } else {
         noHistoryList.classList.add('hidden');
+        // 1. filteredHistory로 변경
         filteredHistory.forEach(item => { 
             const div = document.createElement('div');
             div.className = 'history-item';
             const score = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+            // 1. 이름 표시 로직
             div.innerHTML = `
                 <span class="timestamp">${formatTimestamp(item.timestamp)}</span>
                 <div class="details">
@@ -749,8 +700,10 @@ async function fetchPhonetic(word) {
     phoneticLoader.style.display = 'block';
     fetchPhoneticBtn.disabled = true;
     
+    // 무료 사전 API (dictionaryapi.dev) 사용
     const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
     try {
+        // 3초 타임아웃 설정
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -766,9 +719,10 @@ async function fetchPhonetic(word) {
         const data = await response.json();
         
         if (data[0] && data[0].phonetics) {
+            // IPA 발음 기호 텍스트를 우선적으로 찾음
             const phoneticMatch = data[0].phonetics.find(p => p.text);
             if (phoneticMatch && phoneticMatch.text) {
-                newPhoneticInput.value = phoneticMatch.text;
+                newPhoneticInput.value = phoneticMatch.text; // 예: /æpəl/
                 manualAddMessage.textContent = '발음 기호를 찾았습니다.';
                 manualAddMessage.className = 'text-sm text-green-600 mt-2 h-4';
                 return phoneticMatch.text;
@@ -795,17 +749,21 @@ async function fetchPhonetic(word) {
 }
 
 // --- v5: OCR (Gemini) 함수 ---
+
+// 1. 이미지를 Base64로 변환하는 함수
 function imageToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result.split(',')[1]); 
+        reader.onload = () => resolve(reader.result.split(',')[1]); // 'data:image/jpeg;base64,' 부분 제거
         reader.onerror = error => reject(error);
     });
 }
 
+// 2. Gemini API 호출 함수
 async function callGeminiApi(base64ImageData) {
-    const apiKey = ""; 
+    // API 키는 빈 문자열로 둡니다.
+    const apiKey = ""; // 캔버스 환경에서 자동으로 제공됩니다.
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -813,10 +771,11 @@ async function callGeminiApi(base64ImageData) {
             {
                 role: "user",
                 parts: [
+                    // Gemini에게 원하는 JSON 형식을 명확하게 지시합니다.
                     { text: "Analyze this image of a vocabulary note. Extract the English word and its Korean meaning. Provide the output *only* in JSON format like {\"word\": \"EnglishWord\", \"meaning\": \"KoreanMeaning\"}. If you cannot find a clear word/meaning pair, return {\"word\": \"\", \"meaning\": \"\"}." },
                     {
                         inlineData: {
-                            mimeType: "image/jpeg", 
+                            mimeType: "image/jpeg", // 기본 JPEG, PNG도 가능
                             data: base64ImageData
                         }
                     }
@@ -824,6 +783,7 @@ async function callGeminiApi(base64ImageData) {
             }
         ],
         generationConfig: {
+            // Gemini가 JSON 형식으로 응답하도록 강제합니다.
             responseMimeType: "application/json",
             responseSchema: {
                 type: "OBJECT",
@@ -836,12 +796,14 @@ async function callGeminiApi(base64ImageData) {
         }
     };
     
+    // API 호출 (지연/오류 처리를 위한 재시도 포함)
     let response;
     let retries = 3;
     let delay = 1000;
 
     while (retries > 0) {
         try {
+            // 5초 타임아웃
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -857,29 +819,31 @@ async function callGeminiApi(base64ImageData) {
                 const result = await response.json();
                 if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
                     const jsonText = result.candidates[0].content.parts[0].text;
-                    return JSON.parse(jsonText);
+                    return JSON.parse(jsonText); // {word: "...", meaning: "..."}
                 } else {
                     throw new Error("Invalid API response structure.");
                 }
             } else if (response.status === 429 || response.status >= 500) {
+                // API 과부하 또는 서버 오류 시 재시도
                 console.warn(`API call failed with status ${response.status}. Retrying in ${delay / 1000}s...`);
                 await new Promise(res => setTimeout(res, delay));
-                delay *= 2; 
+                delay *= 2; // Exponential backoff
                 retries--;
             } else {
+                // 400 Bad Request 등 재시도가 의미 없는 오류
                 throw new Error(`API call failed with status: ${response.status}`);
             }
         } catch (error) {
             console.error("Gemini API error:", error);
             retries--;
             if (retries <= 0) {
-                return null; 
+                return null; // 최종 실패
             }
             await new Promise(res => setTimeout(res, delay));
             delay *= 2;
         }
     }
-    return null; 
+    return null; // 모든 재시도 실패
 }
 
 
@@ -897,22 +861,23 @@ startLearnBtn.addEventListener('click', () => {
 
 // 퀴즈 화면
 nextBtn.addEventListener('click', handleNextButton);
-prevBtn.addEventListener('click', handlePrevButton); 
+prevBtn.addEventListener('click', handlePrevButton); // v6: 이전 버튼
 retryBtn.addEventListener('click', () => startQuiz(activeQuizData, quizTitleEl.textContent)); 
 backToMainBtn.addEventListener('click', showMainScreen);
 
+// v6: 홈, 종료 버튼
 homeBtn.addEventListener('click', () => {
-    showMainScreen(); 
+    showMainScreen(); // 확인 창 없이 메인으로
 });
 quitBtn.addEventListener('click', () => {
-    showResults(true); // 5. isQuit = true
+    showResults(); // 확인 창 없이 결과로
 });
 
 
 // v2: 플래시카드 이벤트 리스너
-// 3. 'flashcard' 리스너 -> 'flashcardScene' 리스너로 변경
-flashcardScene.addEventListener('click', handleCardClick); 
-// 3. 'prevCardBtn', 'nextCardBtn' 리스너 삭제
+flashcard.addEventListener('click', flipCard);
+prevCardBtn.addEventListener('click', showPrevCard);
+nextCardBtn.addEventListener('click', showNextCard);
 exitStudyBtn.addEventListener('click', showStudySummary);
 startQuizFromSummaryBtn.addEventListener('click', () => startQuiz(activeStudyData, flashcardTitle.textContent + " 퀴즈"));
 mainFromSummaryBtn.addEventListener('click', showMainScreen);
@@ -1002,12 +967,7 @@ saveNewQuizBtn.addEventListener('click', () => {
         return;
     }
     const newQuestions = generateQuizFromWords(tempWords);
-    // 2. 단어장 생성일 추가
-    const newQuizSet = { 
-        name, 
-        questions: newQuestions, 
-        createdAt: new Date().getTime() // 2. (이 기능은 요청 2번이 아니라 단어장 생성일이네요. 일단 둡니다.)
-    };
+    const newQuizSet = { name, questions: newQuestions };
     const existingIndex = savedWordLists.findIndex(q => q.name === name);
     if (existingIndex > -1) {
          savedWordLists[existingIndex] = newQuizSet;
@@ -1027,15 +987,9 @@ saveNewQuizBtn.addEventListener('click', () => {
 
 // --- v4: 랭킹, 기록, 오답노트 리스너 ---
 
+// 'input' 대신 'change' 이벤트를 사용하여, 입력이 완료된 후 (포커스를 잃었을 때) 저장합니다.
 playerNameInput.addEventListener('change', (e) => {
     savePlayerName(e.target.value);
-});
-
-// 1. 랭킹 초기화 버튼 리스너
-rankingResetBtn.addEventListener('click', () => {
-    rankings = [];
-    saveRankings();
-    renderRankings();
 });
 
 accordionHeaderOndap.addEventListener('click', () => {
@@ -1065,14 +1019,16 @@ clearHistoryBtn.addEventListener('click', () => {
     renderHistory();
 });
 
+// v6: '내 기록만 보기' 필터 체크박스 리스너 추가
 if (filterHistoryCheckbox) {
     filterHistoryCheckbox.addEventListener('change', () => {
-        renderHistory(); 
+        renderHistory(); // 체크박스 상태가 바뀌면 기록 목록을 다시 그림
     });
 }
 
 // --- v5: 고급 기능 리스너 ---
 
+// 발음 기호 자동 검색
 fetchPhoneticBtn.addEventListener('click', () => {
     const word = newWordInput.value.trim();
     if (word) {
@@ -1083,6 +1039,7 @@ fetchPhoneticBtn.addEventListener('click', () => {
     }
 });
 
+// OCR 텍스트 추출
 ocrExtractBtn.addEventListener('click', async () => {
     const file = ocrImageInput.files[0];
     if (!file) {
@@ -1104,6 +1061,7 @@ ocrExtractBtn.addEventListener('click', async () => {
             newMeaningInput.value = result.meaning;
             ocrMessage.textContent = '텍스트를 성공적으로 추출했습니다!';
             ocrMessage.className = 'text-sm text-green-600 mt-2 h-4';
+            // 추출 후 자동으로 발음 기호 검색
             if (result.word) {
                 fetchPhonetic(result.word);
             }
@@ -1117,11 +1075,12 @@ ocrExtractBtn.addEventListener('click', async () => {
         ocrMessage.className = 'text-sm text-red-500 mt-2 h-4';
     } finally {
         ocrExtractBtn.disabled = false;
-        ocrImageInput.value = ''; 
+        ocrImageInput.value = ''; // 파일 입력 초기화
     }
 });
 
 // --- 6. 초기화 ---
+// DOM이 모두 로드된 후 스크립트가 실행되도록 보장
 document.addEventListener('DOMContentLoaded', () => {
     loadWordLists();
     loadPlayerName();
