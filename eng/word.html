@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>영어 단어 암기 (v6 - 최종)</title>
+    <title>영어 단어 암기 (v6 - 분리)</title>
+    
     <!-- 1. 외부 CSS 파일 연결 -->
     <link rel="stylesheet" href="style.css">
     
@@ -38,7 +39,7 @@
                         <i class="fas fa-trash-alt mr-1"></i> 랭킹 초기화
                     </button>
                 </div>
-                <div id="ranking-list" class="space-y-2 mt-3"></div> <!-- v6: mt-3 추가 -->
+                <div id="ranking-list" class="space-y-2 mt-3"></div>
                  <p id="no-ranking-list" class="text-sm text-gray-500 text-center py-2 hidden">아직 랭킹이 없습니다.</p>
             </div>
             
@@ -73,7 +74,7 @@
             </div>
         </div>
         
-        <!-- v5: 새 단어장 만들기 (OCR, 발음 검색 추가) -->
+        <!-- v4: 새 단어장 만들기 (v5 AI 기능 제외) -->
         <div class="accordion-container">
             <div id="accordion-header-new-quiz" class="accordion-header">
                 <h2>새 단어장 직접 만들기</h2>
@@ -81,24 +82,11 @@
             </div>
             <div id="accordion-content-new-quiz" class="accordion-content">
                 
-                <!-- v5: OCR 기능 -->
-                <div class="border p-4 rounded-lg bg-blue-50 mb-6">
-                    <h3 class="text-md font-bold text-gray-700 mb-2">이미지에서 단어 가져오기 (AI)</h3>
-                    <p class="text-sm text-gray-600 mb-3">단어와 의미가 포함된 이미지를 업로드하세요.</p>
-                    <input type="file" id="ocr-image-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200" accept="image/*">
-                    <button id="ocr-extract-btn" class="btn btn-primary w-full mt-3">
-                        <i class="fas fa-magic mr-2"></i> 텍스트 추출
-                    </button>
-                    <p id="ocr-message" class="text-sm mt-2 h-4"></p>
-                </div>
-                
-                <!-- v5: 단어장 이름 -->
                 <div class="mb-4">
                     <label for="new-quiz-name" class="block text-sm font-medium text-gray-700">단어장 이름</label>
                     <input type="text" id="new-quiz-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="예: 토익 필수 단어 1">
                 </div>
 
-                <!-- v5: 추가된 단어 목록 -->
                 <div class="p-4 border rounded-lg bg-white mb-4">
                     <h3 class="text-md font-medium text-gray-700 mb-2">추가된 단어 목록 (<span id="temp-word-count">0</span>/4개 이상)</h3>
                     <div id="temp-word-list" class="max-h-24 overflow-y-auto text-sm text-gray-600 space-y-1">
@@ -106,19 +94,10 @@
                     </div>
                 </div>
 
-                <!-- v5: 수동 입력 폼 -->
                 <div id="add-word-form" class="space-y-3">
-                    <div class="relative">
-                        <input type="text" id="new-word" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="영어 단어 (예: apple)">
-                    </div>
+                    <input type="text" id="new-word" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="영어 단어 (예: apple)">
                     <input type="text" id="new-meaning" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="한국어 의미 (예: 사과)">
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="new-phonetic" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="발음 기호 (선택)">
-                        <button id="fetch-phonetic-btn" class="btn btn-xs btn-secondary">
-                            <i class="fas fa-search mr-1"></i> 자동 검색
-                        </button>
-                        <div id="phonetic-loader" class="loader"></div>
-                    </div>
+                    <input type="text" id="new-phonetic" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="발음 기호 (선택, 예: /ˈæp.əl/)">
                     <button id="add-word-btn" class="btn btn-secondary w-full"><i class="fas fa-plus mr-2"></i>단어 추가</button>
                 </div>
 
@@ -156,12 +135,20 @@
             <h2 id="flashcard-title" class="text-xl font-bold">단어 학습</h2>
             <button id="exit-study-btn" class="btn btn-secondary btn-sm">학습 종료</button>
         </div>
-        <!-- v6: 버튼 삭제, 씬에 이벤트 리스너 추가됨 -->
+        <!-- v6: 스와이프/클릭을 위해 씬(scene)이 전체 너비를 차지하도록 함 -->
         <div class="flashcard-scene" id="flashcard-scene">
             <div class="flashcard" id="flashcard">
                 <div class="flashcard-face flashcard-front" id="flashcard-front"></div>
                 <div class="flashcard-face flashcard-back" id="flashcard-back"></div>
             </div>
+            
+            <!-- v6: 화살표 버튼 추가 -->
+            <button id="card-prev-arrow" class="card-arrow left">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button id="card-next-arrow" class="card-arrow right">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
         <div id="flashcard-progress" class="text-center mt-4"></div>
         <!-- v6: 이전/다음 버튼 삭제됨 -->
@@ -190,17 +177,18 @@
         </div>
         <!-- v6: 퀴즈 UI 수정 (단어 카드 + 4개 보기) -->
         <div id="quiz-content">
-            <div class="question-text min-h-[150px] flex items-center justify-center" id="question"></div>
+            <!-- v6: 요청 4 (UI 수정) -->
+            <div class="question-text" id="question"></div>
             <div id="options" class="mt-4"></div>
             <div class="rationale" id="rationale"></div>
             
-            <!-- v6: 퀴즈 네비게이션 버튼 (이전/다음) -->
+            <!-- v6: 요청 1 (퀴즈 버튼) -->
             <div id="quiz-nav-buttons" class="flex space-x-2 w-full mt-4">
                  <button id="prev-btn" class="btn btn-secondary w-1/2">이전</button>
                  <button id="next-btn" class="btn btn-primary w-1/2">다음</button>
             </div>
             
-            <!-- v6: 퀴즈 푸터 (홈/종료) -->
+            <!-- v6: 요청 1 (퀴즈 버튼) -->
             <div id="quiz-footer">
                 <button id="home-btn" title="메인으로 돌아가기">
                     <i class="fas fa-home"></i>
@@ -222,6 +210,6 @@
     </div>
 
     <!-- 3. 외부 JS 파일 연결 -->
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
