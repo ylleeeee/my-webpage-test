@@ -1,26 +1,73 @@
-// --- 1. 기본 퀴즈 데이터 (20문제) ---
+// --- 1. 기본 퀴즈 데이터 (총 40문제) ---
 // v5: 발음 기호(phonetic) 추가 (v4 베이스에는 수동 입력)
+
+// ✅ 기본단어1
+const sampleQuizData1 = [
+  { word: "rock", meaning: "바위", phonetic: "/rɑːk/", question: "rock", hint: "자연물", options: ["모자", "바위", "문", "인형"], correct: 1, rationale: "'rock'은(는) '바위'를 의미합니다." },
+  { word: "cap", meaning: "모자", phonetic: "/kæp/", question: "cap", hint: "의류", options: ["모자", "침대", "노래하다", "바위"], correct: 0, rationale: "'cap'은(는) '모자'를 의미합니다." },
+  { word: "death", meaning: "죽음", phonetic: "/dɛθ/", question: "death", hint: "생명의 반대", options: ["인형", "죽음", "성냥", "문"], correct: 1, rationale: "'death'은(는) '죽음'을 의미합니다." },
+  { word: "bed", meaning: "침대", phonetic: "/bɛd/", question: "bed", hint: "자는 곳", options: ["모자", "침대", "문", "바위"], correct: 1, rationale: "'bed'은(는) '침대'를 의미합니다." },
+  { word: "match", meaning: "성냥", phonetic: "/mætʃ/", question: "match", hint: "불을 붙이다", options: ["성냥", "문", "노래하다", "모자"], correct: 0, rationale: "'match'은(는) '성냥'을 의미합니다." },
+  { word: "sing", meaning: "노래하다", phonetic: "/sɪŋ/", question: "sing", hint: "목소리", options: ["성냥", "노래하다", "바위", "인형"], correct: 1, rationale: "'sing'은(는) '노래하다'를 의미합니다." },
+  { word: "doll", meaning: "인형", phonetic: "/dɒl/", question: "doll", hint: "장난감", options: ["침대", "인형", "모자", "성냥"], correct: 1, rationale: "'doll'은(는) '인형'을 의미합니다." },
+  { word: "door", meaning: "문", phonetic: "/dɔːr/", question: "door", hint: "건물 출입", options: ["문", "바위", "모자", "노래하다"], correct: 0, rationale: "'door'은(는) '문'을 의미합니다." }
+];
+
+// ✅ 기본단어2
+const sampleQuizData2 = [
+  { word: "coin", meaning: "동전", phonetic: "/kɔɪn/", question: "coin", hint: "돈", options: ["동전", "상어", "시소", "화장지"], correct: 0, rationale: "'coin'은(는) '동전'을 의미합니다." },
+  { word: "shark", meaning: "상어", phonetic: "/ʃɑːrk/", question: "shark", hint: "바다동물", options: ["상어", "동전", "주", "시소"], correct: 0, rationale: "'shark'은(는) '상어'를 의미합니다." },
+  { word: "smell", meaning: "냄새 맡다", phonetic: "/smɛl/", question: "smell", hint: "코", options: ["상어", "냄새 맡다", "화장지", "주"], correct: 1, rationale: "'smell'은(는) '냄새 맡다'를 의미합니다." },
+  { word: "seesaw", meaning: "시소", phonetic: "/ˈsiːˌsɔː/", question: "seesaw", hint: "놀이터", options: ["시소", "화장지", "상어", "동전"], correct: 0, rationale: "'seesaw'은(는) '시소'를 의미합니다." },
+  { word: "tray", meaning: "쟁반", phonetic: "/treɪ/", question: "tray", hint: "식사", options: ["시소", "쟁반", "화장지", "동전"], correct: 1, rationale: "'tray'은(는) '쟁반'을 의미합니다." },
+  { word: "snow", meaning: "눈", phonetic: "/snoʊ/", question: "snow", hint: "겨울", options: ["눈", "동전", "상어", "시소"], correct: 0, rationale: "'snow'은(는) '눈'을 의미합니다." },
+  { word: "tissue", meaning: "화장지", phonetic: "/ˈtɪʃuː/", question: "tissue", hint: "코 닦는 것", options: ["시소", "상어", "화장지", "동전"], correct: 2, rationale: "'tissue'은(는) '화장지'를 의미합니다." },
+  { word: "mouse", meaning: "쥐", phonetic: "/maʊs/", question: "mouse", hint: "작은 동물", options: ["쥐", "상어", "화장지", "눈"], correct: 0, rationale: "'mouse'은(는) '쥐'를 의미합니다." }
+];
+
+// ✅ 기본단어3
+const sampleQuizData3 = [
+  { word: "zebra", meaning: "얼룩말", phonetic: "/ˈziːbrə/", question: "zebra", hint: "줄무늬 동물", options: ["포도", "주머니", "얼룩말", "베개"], correct: 2, rationale: "'zebra'은(는) '얼룩말'을 의미합니다." },
+  { word: "grape", meaning: "포도", phonetic: "/ɡreɪp/", question: "grape", hint: "과일", options: ["포도", "조용한", "숙녀", "베개"], correct: 0, rationale: "'grape'은(는) '포도'를 의미합니다." },
+  { word: "pocket", meaning: "주머니", phonetic: "/ˈpɒkɪt/", question: "pocket", hint: "옷의 일부", options: ["주머니", "오징어", "숙녀", "조용한"], correct: 0, rationale: "'pocket'은(는) '주머니'를 의미합니다." },
+  { word: "squid", meaning: "오징어", phonetic: "/skwɪd/", question: "squid", hint: "바다동물", options: ["오징어", "포도", "숙녀", "주머니"], correct: 0, rationale: "'squid'은(는) '오징어'를 의미합니다." },
+  { word: "rabbit", meaning: "토끼", phonetic: "/ˈræbɪt/", question: "rabbit", hint: "귀가 긴 동물", options: ["베개", "토끼", "포도", "오징어"], correct: 1, rationale: "'rabbit'은(는) '토끼'를 의미합니다." },
+  { word: "pillow", meaning: "베개", phonetic: "/ˈpɪloʊ/", question: "pillow", hint: "자는 도구", options: ["주머니", "포도", "베개", "토끼"], correct: 2, rationale: "'pillow'은(는) '베개'를 의미합니다." },
+  { word: "quiet", meaning: "조용한", phonetic: "/ˈkwaɪət/", question: "quiet", hint: "소리가 없는 상태", options: ["조용한", "숙녀", "포도", "오징어"], correct: 0, rationale: "'quiet'은(는) '조용한'을 의미합니다." },
+  { word: "lady", meaning: "숙녀", phonetic: "/ˈleɪdi/", question: "lady", hint: "여성", options: ["숙녀", "토끼", "포도", "베개"], correct: 0, rationale: "'lady'은(는) '숙녀'를 의미합니다." }
+];
+
+// ✅ 기본단어4
+const sampleQuizData4 = [
+  { word: "clothes", meaning: "옷", phonetic: "/kloʊðz/", question: "clothes", hint: "입는 것", options: ["옷", "자세", "배고픈", "산"], correct: 0, rationale: "'clothes'은(는) '옷'을 의미합니다." },
+  { word: "gesture", meaning: "자세", phonetic: "/ˈdʒɛstʃər/", question: "gesture", hint: "몸짓", options: ["자세", "국가", "박물관", "소풍"], correct: 0, rationale: "'gesture'은(는) '자세'를 의미합니다." },
+  { word: "giant", meaning: "큰", phonetic: "/ˈdʒaɪənt/", question: "giant", hint: "크기", options: ["옷", "큰", "국가", "산"], correct: 1, rationale: "'giant'은(는) '큰'을 의미합니다." },
+  { word: "nation", meaning: "국가", phonetic: "/ˈneɪʃən/", question: "nation", hint: "나라", options: ["옷", "국가", "소풍", "산"], correct: 1, rationale: "'nation'은(는) '국가'를 의미합니다." },
+  { word: "hungry", meaning: "배고픈", phonetic: "/ˈhʌŋɡri/", question: "hungry", hint: "식사 전 상태", options: ["옷", "배고픈", "자세", "국가"], correct: 1, rationale: "'hungry'은(는) '배고픈'을 의미합니다." },
+  { word: "mountain", meaning: "산", phonetic: "/ˈmaʊntən/", question: "mountain", hint: "자연", options: ["박물관", "산", "소풍", "옷"], correct: 1, rationale: "'mountain'은(는) '산'을 의미합니다." },
+  { word: "museum", meaning: "박물관", phonetic: "/mjuˈziːəm/", question: "museum", hint: "전시", options: ["박물관", "소풍", "옷", "국가"], correct: 0, rationale: "'museum'은(는) '박물관'을 의미합니다." },
+  { word: "picnic", meaning: "소풍", phonetic: "/ˈpɪknɪk/", question: "picnic", hint: "야외 활동", options: ["소풍", "산", "박물관", "국가"], correct: 0, rationale: "'picnic'은(는) '소풍'을 의미합니다." }
+];
+
+// ✅ 기본단어5
+const sampleQuizData5 = [
+  { word: "restroom", meaning: "공중화장실", phonetic: "/ˈrɛstruːm/", question: "restroom", hint: "공공장소", options: ["공중화장실", "회사", "비행기", "국가"], correct: 0, rationale: "'restroom'은(는) '공중화장실'을 의미합니다." },
+  { word: "danger", meaning: "위험", phonetic: "/ˈdeɪndʒər/", question: "danger", hint: "안전의 반대", options: ["위험", "아름다운", "대부분", "호기심"], correct: 0, rationale: "'danger'은(는) '위험'을 의미합니다." },
+  { word: "beautiful", meaning: "아름다운", phonetic: "/ˈbjuːtɪfəl/", question: "beautiful", hint: "예쁜", options: ["대부분", "아름다운", "비행기", "회사"], correct: 1, rationale: "'beautiful'은(는) '아름다운'을 의미합니다." },
+  { word: "almost", meaning: "대부분", phonetic: "/ˈɔːlmoʊst/", question: "almost", hint: "거의", options: ["아름다운", "대부분", "호기심", "회사"], correct: 1, rationale: "'almost'은(는) '대부분'을 의미합니다." },
+  { word: "airplane", meaning: "비행기", phonetic: "/ˈɛrpleɪn/", question: "airplane", hint: "하늘", options: ["비행기", "회사", "위험", "공중화장실"], correct: 0, rationale: "'airplane'은(는) '비행기'를 의미합니다." },
+  { word: "curious", meaning: "호기심이 많은", phonetic: "/ˈkjʊriəs/", question: "curious", hint: "알고 싶어함", options: ["호기심이 많은", "비행기", "회사", "대부분"], correct: 0, rationale: "'curious'은(는) '호기심이 많은'을 의미합니다." },
+  { word: "company", meaning: "회사", phonetic: "/ˈkʌmpəni/", question: "company", hint: "직장", options: ["회사", "비행기", "위험", "공중화장실"], correct: 0, rationale: "'company'은(는) '회사'를 의미합니다." },
+  { word: "history", meaning: "역사", phonetic: "/ˈhɪstəri/", question: "history", hint: "과거", options: ["역사", "회사", "호기심이 많은", "공중화장실"], correct: 0, rationale: "'history'은(는) '역사'를 의미합니다." }
+];
+
+// ✅ 통합: 기본 퀴즈 한 묶음으로 사용하기
 const sampleQuizData = [
-    { word: "restroom", meaning: "화장실", phonetic: "/ˈrɛstruːm/", question: "restroom", hint: "공공장소", options: ["숙제", "화장실", "비행기", "국가"], correct: 1, rationale: "'restroom'은(는) '화장실'을(를) 의미합니다." },
-    { word: "difficult", meaning: "어려운", phonetic: "/ˈdɪfɪkəlt/", question: "difficult", hint: "easy의 반대", options: ["어려운", "거인, 거대한", "소풍", "숙제"], correct: 0, rationale: "'difficult'은(는) '어려운'을(를) 의미합니다." },
-    { word: "hungry", meaning: "배고픈", phonetic: "/ˈhʌŋɡri/", question: "hungry", hint: "식욕을 느끼는 상태", options: ["배고픈", "산", "국가", "화장실"], correct: 0, rationale: "'hungry'은(는) '배고픈'을(를) 의미합니다." },
-    { word: "beautiful", meaning: "아름다운", phonetic: "/ˈbjuːtɪfl/", question: "beautiful", hint: "시각적/감각적", options: ["어제", "아름다운", "어려운", "옷"], correct: 1, rationale: "'beautiful'은(는) '아름다운'을(를) 의미합니다." },
-    { word: "remember", meaning: "기억하다", phonetic: "/rɪˈmɛmbər/", question: "remember", hint: "과거의 일을 떠올림", options: ["비행기", "기억하다", "박물관", "배고픈"], correct: 1, rationale: "'remember'은(는) '기억하다'을(를) 의미합니다." },
-    { word: "museum", meaning: "박물관", phonetic: "/mjuːˈziːəm/", question: "museum", hint: "유물, 예술품 전시", options: ["기억하다", "박물관", "호기심이 많은", "소풍"], correct: 1, rationale: "'museum'은(는) '박물관'을(를) 의미합니다." },
-    { word: "curious", meaning: "호기심이 많은", phonetic: "/ˈkjʊəriəs/", question: "curious", hint: "알고 싶어 하는 마음", options: ["호기심이 많은", "국가", "감자", "위험"], correct: 0, rationale: "'curious'은(는) '호기심이 많은'을(를) 의미합니다." },
-    { word: "yesterday", meaning: "어제", phonetic: "/ˈjɛstərdeɪ/", question: "yesterday", hint: "오늘의 바로 전날", options: ["위험", "산", "숙제", "어제"], correct: 3, rationale: "'yesterday'은(는) '어제'을(를) 의미합니다." },
-    { word: "gesture", meaning: "몸짓, 제스처", phonetic: "/ˈdʒɛstʃər/", question: "gesture", hint: "의사 전달 수단", options: ["몸짓, 제스처", "기억하다", "숙제", "배고픈"], correct: 0, rationale: "'gesture'은(는) '몸짓, 제스처'을(를) 의미합니다." },
-    { word: "condition", meaning: "상태, 조건", phonetic: "/kənˈdɪʃn/", question: "condition", hint: "사물/사람의 현황", options: ["아름다운", "상태, 조건", "역사", "어제"], correct: 1, rationale: "'condition'은(는) '상태, 조건'을(를) 의미합니다." },
-    { word: "danger", meaning: "위험", phonetic: "/ˈdeɪndʒər/", question: "danger", hint: "안전하지 않은 상태", options: ["위험", "옷", "화장실", "숙제"], correct: 0, rationale: "'danger'은(는) '위험'을(를) 의미합니다." },
-    { word: "airplane", meaning: "비행기", phonetic: "/ˈɛərpleɪn/", question: "airplane", hint: "하늘을 나는 교통수단", options: ["국가", "옷", "비행기", "역사"], correct: 2, rationale: "'airplane'은(는) '비행기'을(를) 의미합니다." },
-    { word: "history", meaning: "역사", phonetic: "/ˈhɪstəri/", question: "history", hint: "과거의 사실, 기록", options: ["감자", "역사", "어려운", "박물관"], correct: 1, rationale: "'history'은(는) '역사'을(를) 의미합니다." },
-    { word: "clothes", meaning: "옷", phonetic: "/kloʊðz/", question: "clothes", hint: "몸에 입는 것", options: ["옷", "소풍", "국가", "상태, 조건"], correct: 0, rationale: "'clothes'은(는) '옷'을(를) 의미합니다." },
-    { word: "giant", meaning: "거인, 거대한", phonetic: "/ˈdʒaɪənt/", question: "giant", hint: "매우 큰 사람/사물", options: ["거인, 거대한", "옷", "비행기", "감자"], correct: 0, rationale: "'giant'은(는) '거인, 거대한'을(를) 의미합니다." },
-    { word: "nation", meaning: "국가", phonetic: "/ˈneɪʃn/", question: "nation", hint: "영토와 국민을 가진 나라", options: ["국가", "기억하다", "화장실", "산"], correct: 0, rationale: "'nation'은(는) '국가'을(를) 의미합니다." },
-    { word: "mountain", meaning: "산", phonetic: "/ˈmaʊntn/", question: "mountain", hint: "높이 솟은 지형", options: ["숙제", "산", "역사", "아름다운"], correct: 1, rationale: "'mountain'은(는) '산'을(를) 의미합니다." },
-    { word: "picnic", meaning: "소풍", phonetic: "/ˈpɪknɪk/", question: "picnic", hint: "야외로 놀러 가는 것", options: ["호기심이 많은", "소풍", "어제", "기억하다"], correct: 1, rationale: "'picnic'은(는) '소풍'을(를) 의미합니다." },
-    { word: "potato", meaning: "감자", phonetic: "/pəˈteɪtoʊ/", question: "potato", hint: "땅속 덩이줄기 채소", options: ["몸짓, 제스처", "감자", "위험", "어려운"], correct: 1, rationale: "'potato'은(는) '감자'을(를) 의미합니다." },
-    { word: "homework", meaning: "숙제", phonetic: "/ˈhoʊmwɜːrk/", question: "homework", hint: "학생이 집에서 하는 과제", options: ["숙제", "상태, 조건", "어제", "산"], correct: 0, rationale: "'homework'은(는) '숙제'을(를) 의미합니다." }
+  ...sampleQuizData1,
+  ...sampleQuizData2,
+  ...sampleQuizData3,
+  ...sampleQuizData4,
+  ...sampleQuizData5
 ];
 
 // --- 2. DOM 요소 ---
@@ -438,6 +485,7 @@ function showMainScreen() {
     renderWordList();
     renderRankings();
     renderWrongQuizButton();
+    renderHistory();
     
     if (filterHistoryCheckbox) {
         filterHistoryCheckbox.checked = false;
@@ -474,10 +522,11 @@ function renderWordList() {
     const sampleQuizItem = document.createElement('div');
     sampleQuizItem.className = 'flex items-center p-3 bg-white border rounded-lg';
     sampleQuizItem.innerHTML = `
-        <input type="checkbox" class="quiz-select-cb" id="quiz-cb-sample" data-index="-1">
+        <input type="checkbox" class="quiz-select-cb" id="quiz-cb-sample" data-index="-1">        
         <label for="quiz-cb-sample" class="quiz-item-label">
             <span>기본 퀴즈 (${sampleQuizData.length}문제)</span>
         </label>
+        
         <div class="quiz-item-buttons">
             <button class="btn btn-xs btn-secondary" disabled title="기본 단어장은 편집할 수 없습니다.">
                 <i class="fas fa-pencil-alt"></i>
@@ -1224,7 +1273,7 @@ if (filterHistoryCheckbox) {
     });
 }
 
-// --- v7: 편집 모달 리스너 ---
+// --- v7: 단어장 편집 모달 리스너 ---
 editModalCloseBtn.addEventListener('click', closeEditModal);
 editModalCancelBtn.addEventListener('click', closeEditModal);
 editModalSaveBtn.addEventListener('click', saveEditedQuiz);
