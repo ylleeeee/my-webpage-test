@@ -112,6 +112,18 @@
                     </div>
                     <p id="auto-add-message" class="ai-message"></p>
                 </div>
+                <!-- 2-1. 수동으로 단어 추가 (AI 실패 대비) -->
+                <div class="ai-section">
+                  <h3 class="text-md font-bold text-gray-700 mb-2">2-1. 수동으로 단어 추가</h3>
+                  <div class="space-y-2">
+                    <input type="text" id="new-word-manual" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="영어 단어 (예: apple)">
+                    <input type="text" id="new-meaning-manual" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="한국어 의미 (예: 사과)">
+                    <input type="text" id="new-phonetic-manual" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="발음 기호 (선택, 예: /ˈæp.əl/)">
+                    <button id="add-word-manual-btn" class="btn btn-secondary w-full">
+                      <i class="fas fa-plus mr-2"></i>이 단어 수동 추가
+                    </button>
+                  </div>
+                </div>
 
                 <div class="p-4 border rounded-lg bg-white mb-4">
                     <h3 class="text-md font-medium text-gray-700 mb-2">추가된 단어 목록 (<span id="temp-word-count">0</span>/4개 이상)</h3>
