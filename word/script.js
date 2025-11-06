@@ -213,29 +213,44 @@ function loadWordLists(){ savedWordLists = JSON.parse(localStorage.getItem(STORA
 function saveWordLists(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(savedWordLists)); }
 function formatCreationDate(ts){ if(!ts) return ''; const d=new Date(ts); return `생성일: ${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`; }
 
-function renderWordList(){
+function renderWordList() {
+  // 리스트 영역 초기화
   quizList.innerHTML = '';
-  const builtinSets = getBuiltinQuizSets();
 
-  // 기본 세트
+  // 1) 기본 세트(내장) 불러오기
+  const builtinSets = (Array.isArray(window.BUILTIN_QUIZ_SETS) && window.BUILTIN_QUIZ_SETS.length)
+    ? window.BUILTIN_QUIZ_SETS
+    : [
+        { key: -1, name: '기본단어1', data: sampleQuizData1 },
+        { key: -2, name: '기본단어2', data: sampleQuizData2 },
+        { key: -3, name: '기본단어3', data: sampleQuizData3 },
+        { key: -4, name: '기본단어4', data: sampleQuizData4 },
+        { key: -5, name: '기본단어5', data: sampleQuizData5 },
+      ];
+
+  // 2) 기본 세트 렌더링
   builtinSets.forEach((set, idx) => {
     const item = document.createElement('div');
     item.className = 'flex items-center p-3 bg-white border rounded-lg';
     item.innerHTML = `
       <input type="checkbox" class="quiz-select-cb" id="quiz-cb-builtin-${idx}" data-index="${set.key}">
       <label for="quiz-cb-builtin-${idx}" class="quiz-item-label">
-        <span>${set.name} (${(set.data||[]).length}문제)</span>
+        <span>${set.name} (${set.data.length}문제)</span>
       </label>
       <div class="quiz-item-buttons">
-        <button class="btn btn-xs btn-secondary" disabled title="기본 단어장은 편집할 수 없습니다."><i class="fas fa-pencil-alt"></i></button>
-        <button class="btn btn-xs btn-danger" disabled title="기본 단어장은 삭제할 수 없습니다."><i class="fas fa-trash-alt"></i></button>
+        <button class="btn btn-xs btn-secondary" disabled title="기본 단어장은 편집할 수 없습니다.">
+          <i class="fas fa-pencil-alt"></i>
+        </button>
+        <button class="btn btn-xs btn-danger" disabled title="기본 단어장은 삭제할 수 없습니다.">
+          <i class="fas fa-trash-alt"></i>
+        </button>
       </div>
     `;
     quizList.appendChild(item);
   });
 
-  // 사용자 세트
-  if (Array.isArray(savedWordLists) && savedWordLists.length){
+  // 3) 사용자 저장 단어장 렌더링
+  if (savedWordLists.length > 0) {
     savedWordLists.forEach((quiz, index) => {
       const it = document.createElement('div');
       it.className = 'flex items-center p-3 bg-white border rounded-lg';
@@ -247,13 +262,26 @@ function renderWordList(){
           ${creationDate ? `<div class="quiz-item-date">${creationDate}</div>` : ''}
         </label>
         <div class="quiz-item-buttons">
-          <button class="btn btn-xs btn-secondary edit-quiz-btn" data-index="${index}" title="단어장 편집"><i class="fas fa-pencil-alt"></i></button>
-          <button class="btn btn-xs btn-danger delete-quiz-btn" data-index="${index}" title="단어장 삭제"><i class="fas fa-trash-alt"></i></button>
+          <button class="btn btn-xs btn-secondary edit-quiz-btn" data-index="${index}" title="단어장 편집">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+          <button class="btn btn-xs btn-danger delete-quiz-btn" data-index="${index}" title="단어장 삭제">
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </div>
       `;
       quizList.appendChild(it);
     });
   }
+
+  // 4) “저장된 단어장이 없습니다” 표시 토글
+  const hasAnyList = (builtinSets.length > 0) || (savedWordLists.length > 0);
+  if (hasAnyList) {
+    noQuizList.classList.add('hidden');
+  } else {
+    noQuizList.classList.remove('hidden');
+  }
+}
 
   const hasAny = builtinSets.length > 0 || (savedWordLists && savedWordLists.length > 0);
   if (hasAny) noQuizList.classList.add('hidden');
@@ -522,22 +550,25 @@ quizList.addEventListener('change', e=>{
   selectionMessage.textContent = on ? `${checked.length}개 단어장 선택됨` : '';
 });
 // 편집/삭제
-quizList.addEventListener('click', e=>{
-  const btn = e.target.closest('button'); if(!btn) return;
+quizList.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+
   const index = parseInt(btn.dataset.index, 10);
 
-  if (btn.classList.contains('delete-quiz-btn')){
-    const quiz = savedWordLists[index];
-    const name = quiz?.name || '이 단어장';
-    const ok = window.confirm(`'${name}' 단어장을 삭제하겠습니까?`);
-    if(!ok) return;
-    savedWordLists.splice(index,1);
-    saveWordLists(); renderWordList();
+  if (btn.classList.contains('delete-quiz-btn')) {
+    const ok = window.confirm('단어장을 삭제하겠습니까?');
+    if (!ok) return;
+    savedWordLists.splice(index, 1);
+    saveWordLists();
+    renderWordList();
     startLearnBtn.disabled = startQuizBtn.disabled = startRandomQuizBtn.disabled = true;
     selectionMessage.textContent = '';
-    return;
   }
-  if (btn.classList.contains('edit-quiz-btn')) openEditModal(index);
+
+  if (btn.classList.contains('edit-quiz-btn')) {
+    openEditModal(index);
+  }
 });
 
 // 학습/퀴즈/랜덤
