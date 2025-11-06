@@ -1,0 +1,78 @@
+<!-- ... (약 101줄의 코드) ... -->
+    }
+
+    /* accordion */
+    /* [수정됨] 스크린샷(de6c76.png) 디자인(카드형 아코디언)으로 복구 */
+    .accordion{
+      background:var(--card); 
+      border:1px solid #e5e7eb; 
+      border-radius:14px; 
+      margin:16px 0;
+      box-shadow: 0 6px 20px rgba(17, 24, 39, 0.04); 
+      overflow: hidden; /* radius가 content에 적용되도록 */
+    }
+
+    .accordion-header{
+      width:100%; 
+      padding: 18px; /* .card와 동일한 padding */
+      text-align:left; 
+      border:none; 
+      background:none; 
+      font-weight:700; 
+      font-size: 18px; 
+      color: #1f2937; 
+      cursor:pointer;
+      display:flex; 
+      align-items:center;
+      justify-content:space-between;
+      position: relative; 
+    }
+    
+    /* 아코디언 헤더 화살표 아이콘 */
+    .accordion-header::after {
+      content: '\f078'; /* font-awesome down arrow */
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      font-size: 14px;
+      color: #6b7280; /* muted grey */
+      transition: transform 0.25s ease;
+    }
+
+    /* 아코디언 열렸을 때 화살표 회전 */
+    .accordion-header.open::after {
+      transform: rotate(-180deg);
+    }
+
+    .accordion-content{
+      max-height: 0; 
+      overflow: hidden;
+      transition: max-height .25s ease, padding .25s ease;
+      padding: 0 18px; /* .card와 동일한 좌우 padding */
+      display: block; 
+      border-top: none;
+    }
+    
+    .accordion-header.open + .accordion-content,
+    .accordion-content.open{
+      max-height: 1000px; /* 넉넉한 값 */
+      padding: 0px 18px 18px 18px; /* 상단 제외, .card와 동일한 padding */
+      border-top: 1px solid #eef0f4; /* 헤더와 컨텐츠 구분선 */
+    }
+
+
+    /* * [수정됨] 
+     * 오버레이(퀴즈/플래시카드) 스타일 수정
+<!-- ... (약 169줄의 코드) ... -->
+    /* 안내 텍스트 */
+    #selection-message {
+      margin-top: 6px;
+      min-height: 18px;
+    }
+
+    /* [수정됨] 이전에 중복 정의되었던 아코디언 스타일을 (line 103 부근으로) 통합하고 이 섹션은 삭제합니다. */
+    
+
+
+    /* 결과/오답 리스트 기본 */
+    #wrong-answers-list ul {
+<!-- ... (끝까지) ... -->
