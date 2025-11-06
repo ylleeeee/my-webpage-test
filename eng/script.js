@@ -574,11 +574,13 @@ function renderRankings() {
 function updateRankings(name, score) {
     if (!name || score === 0) return; 
     
+    const points = score * 5; // 2. 5점 환산
+    
     const existingIndex = rankings.findIndex(r => r.name === name);
     if (existingIndex > -1) {
-        rankings[existingIndex].totalScore += (score * 5); // 2. (score * 5)로 수정
+        rankings[existingIndex].totalScore += points; // 2. 수정
     } else {
-        rankings.push({ name: name, totalScore: (score * 5) }); // 2. (score * 5)로 수정
+        rankings.push({ name: name, totalScore: points }); // 2. 수정
     }
     saveRankings();
     renderRankings();
