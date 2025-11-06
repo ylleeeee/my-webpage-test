@@ -3,6 +3,15 @@
  * - 기본 세트는 BUILTIN_QUIZ_SETS로 명시 등록 (전역 탐색 X)
  * - 수동 추가/AI 추가/편집/삭제/퀴즈/학습/랜덤/오답/랭킹/기록 모두 포함
  ************************************************************/
+// ★ 여기만 바꿈: 전역에 고정해서 어디서든 접근되게
+window.BUILTIN_QUIZ_SETS = [
+  { key: -1, name: '기본단어1', data: sampleQuizData1 },
+  { key: -2, name: '기본단어2', data: sampleQuizData2 },
+  { key: -3, name: '기본단어3', data: sampleQuizData3 },
+  { key: -4, name: '기본단어4', data: sampleQuizData4 },
+  { key: -5, name: '기본단어5', data: sampleQuizData5 },
+];
+// 추가 시: window.BUILTIN_QUIZ_SETS.push({ key:-6, name:'기본단어6', data: sampleQuizData6 });
 
 /* ===================== 1) 기본 세트 데이터 ===================== */
 
@@ -169,7 +178,20 @@ let editingQuizIndex = -1;
 let editingTempWords = [];
 
 /* ===================== 4) 기본세트 접근 ===================== */
-function getBuiltinQuizSets() { return BUILTIN_QUIZ_SETS; }
+function getBuiltinQuizSets() {
+  // 전역(window)에 없거나 비어 있으면 즉석 복구(보호로직)
+  if (!Array.isArray(window.BUILTIN_QUIZ_SETS) || window.BUILTIN_QUIZ_SETS.length === 0) {
+    return [
+      { key: -1, name: '기본단어1', data: sampleQuizData1 },
+      { key: -2, name: '기본단어2', data: sampleQuizData2 },
+      { key: -3, name: '기본단어3', data: sampleQuizData3 },
+      { key: -4, name: '기본단어4', data: sampleQuizData4 },
+      { key: -5, name: '기본단어5', data: sampleQuizData5 },
+    ];
+  }
+  return window.BUILTIN_QUIZ_SETS;
+}
+
 function getAllBuiltinQuestions() { return BUILTIN_QUIZ_SETS.flatMap(s => s.data || []); }
 
 /* ===================== 5) 퀴즈 로직 ===================== */
@@ -256,9 +278,17 @@ function loadWordLists(){ savedWordLists = JSON.parse(localStorage.getItem(STORA
 function saveWordLists(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(savedWordLists)); }
 function formatCreationDate(ts){ if(!ts) return ''; const d=new Date(ts); return `생성일: ${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`; }
 
-function renderWordList(){
-  quizList.innerHTML='';
-  const builtinSets=getBuiltinQuizSets();
+function renderWordList() {
+  // ...
+  const builtinSets = getBuiltinQuizSets();
+
+  // (중략) 기본세트 + 사용자세트 렌더링
+
+  // ★ 이 조건이 꼭 있어야 해요
+  const hasAnyList = (builtinSets.length > 0) || (savedWordLists.length > 0);
+  if (hasAnyList) noQuizList.classList.add('hidden');
+  else noQuizList.classList.remove('hidden');
+}
 
   // 1) 기본 세트 렌더
   builtinSets.forEach((set, idx)=>{
