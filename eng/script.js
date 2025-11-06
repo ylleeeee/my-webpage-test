@@ -381,6 +381,8 @@ function showNextCard() {
         currentCardIndex++;
         loadCard(currentCardIndex);
     } else {
+        // 마지막 카드일 때, 3초 뒤 자동 종료 (혹은 그대로 두기)
+        // 여기서는 마지막 카드에서 '다음' 누르면 요약 화면으로
         showStudySummary();
     }
 }
@@ -585,7 +587,7 @@ function renderRankings() {
     
     if (rankings.scores.length === 0) {
         noRankingList.classList.remove('hidden');
-        noRankingList.innerHTML = `아직 랭킹이 없습니다. <span class"ranking-start-date">(기록 시작일: ${dateString})</span>`;
+        noRankingList.innerHTML = `아직 랭킹이 없습니다. <span class="ranking-start-date">(기록 시작일: ${dateString})</span>`;
     } else {
         noRankingList.classList.add('hidden');
         const icons = [
