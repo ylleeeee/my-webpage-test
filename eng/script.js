@@ -37,7 +37,7 @@ const optionsEl = document.getElementById('options');
 const rationaleEl = document.getElementById('rationale');
 const nextBtn = document.getElementById('next-btn');
 
-// (요청 1) v6: 퀴즈 화면 버튼 추가
+// v6: 퀴즈 화면 버튼 추가
 const prevBtn = document.getElementById('prev-btn');
 const homeBtn = document.getElementById('home-btn');
 const quitBtn = document.getElementById('quit-btn');
@@ -96,15 +96,9 @@ const accordionContentHistory = document.getElementById('accordion-content-histo
 const historyList = document.getElementById('history-list');
 const noHistoryList = document.getElementById('no-history-list');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
-// ...
-const clearHistoryBtn = document.getElementById('clear-history-btn');
 
-// ▼ 1. 필터 체크박스 변수 추가 ▼
+// v6: '내 기록만 보기' 필터 DOM 요소
 const filterHistoryCheckbox = document.getElementById('filter-history-checkbox');
-// ▲ 1. 필터 체크박스 변수 추가 ▲
-
-// v5: OCR, 발음 검색 DOM 요소
-// ...
 
 // v5: OCR, 발음 검색 DOM 요소
 const ocrImageInput = document.getElementById('ocr-image-input');
@@ -181,7 +175,7 @@ function loadQuestion() {
     progressEl.textContent = `문제 ${currentQuestionIndex + 1} / ${activeQuizData.length}`;
     questionEl.textContent = currentQuestion.question;
     
-    // (요청 1) v6: 이전 버튼 상태 관리
+    // v6: 이전 버튼 상태 관리
     prevBtn.disabled = (currentQuestionIndex === 0);
     
     currentQuestion.options.forEach((option, index) => {
@@ -192,7 +186,7 @@ function loadQuestion() {
         button.addEventListener('click', selectAnswer);
         optionsEl.appendChild(button);
         
-        // (요청 1) v6: 이미 푼 문제 상태 복원
+        // v6: 이미 푼 문제 상태 복원
         if (currentQuestion.answered) {
             if (index === currentQuestion.correct) {
                 button.classList.add('correct');
@@ -203,7 +197,7 @@ function loadQuestion() {
         }
     });
 
-    // (요청 1) v6: 이미 푼 문제 상태 복원
+    // v6: 이미 푼 문제 상태 복원
     if (currentQuestion.answered) {
         if (currentQuestion.rationale) {
             rationaleEl.textContent = currentQuestion.rationale;
@@ -221,7 +215,7 @@ function resetState() {
     rationaleEl.style.display = 'none';
     rationaleEl.textContent = '';
     nextBtn.disabled = true;
-    prevBtn.disabled = true; // (요청 1) v6: 이전 버튼 비활성화
+    prevBtn.disabled = true; // v6: 이전 버튼 비활성화
 }
 
 function selectAnswer(e) {
@@ -257,7 +251,7 @@ function selectAnswer(e) {
     }
     
     nextBtn.disabled = false;
-    prevBtn.disabled = (currentQuestionIndex === 0); // (요청 1) v6: 이전 버튼 활성화
+    prevBtn.disabled = (currentQuestionIndex === 0); // v6: 이전 버튼 활성화
 }
 
 function showResults() {
@@ -309,7 +303,7 @@ function handleNextButton() {
     }
 }
 
-// (요청 1) v6: 이전 문제 함수
+// v6: 이전 문제 함수
 function handlePrevButton() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
@@ -405,6 +399,11 @@ function showMainScreen() {
     renderWordList();
     renderRankings();
     renderWrongQuizButton();
+    
+    // v6: 필터 체크박스 초기화
+    if (filterHistoryCheckbox) { // DOM이 로드되었는지 확인
+        filterHistoryCheckbox.checked = false;
+    }
     renderHistory();
     
     startLearnBtn.disabled = true;
@@ -657,20 +656,35 @@ function formatTimestamp(timestamp) {
     return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+// v6: '내 기록만 보기' 필터링 기능이 추가된 renderHistory
 function renderHistory() {
     historyList.innerHTML = '';
-    if (quizHistory.length === 0) {
+
+    // 1. 필터링 로직 추가
+    const showOnlyMyRecords = filterHistoryCheckbox.checked;
+    const filteredHistory = showOnlyMyRecords 
+        ? quizHistory.filter(item => item.playerName === currentPlayerName) 
+        : quizHistory;
+    
+    if (filteredHistory.length === 0) { // 1. filteredHistory로 변경
         noHistoryList.classList.remove('hidden');
+        // 1. 필터링 결과에 따라 다른 메시지 표시
+        if (showOnlyMyRecords && quizHistory.length > 0) { 
+            noHistoryList.textContent = '내 학습 기록이 없습니다.';
+        } else {
+            noHistoryList.textContent = '학습 기록이 없습니다.';
+        }
     } else {
         noHistoryList.classList.add('hidden');
-        quizHistory.forEach(item => {
+        // 1. filteredHistory로 변경
+        filteredHistory.forEach(item => { 
             const div = document.createElement('div');
             div.className = 'history-item';
             const score = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+            // 1. 이름 표시 로직
             div.innerHTML = `
                 <span class="timestamp">${formatTimestamp(item.timestamp)}</span>
                 <div class="details">
-                    <!-- 1. 학습자 이름 표시 -->
                     <strong>${item.quizName}</strong> (학습자: ${item.playerName || '기록 없음'})
                     (${item.total}문제 중 ${item.correct}개 정답, ${item.wrong}개 오답)
                     <span class="score-badge">${score}점</span>
@@ -847,11 +861,11 @@ startLearnBtn.addEventListener('click', () => {
 
 // 퀴즈 화면
 nextBtn.addEventListener('click', handleNextButton);
-prevBtn.addEventListener('click', handlePrevButton); // (요청 1) v6: 이전 버튼
+prevBtn.addEventListener('click', handlePrevButton); // v6: 이전 버튼
 retryBtn.addEventListener('click', () => startQuiz(activeQuizData, quizTitleEl.textContent)); 
 backToMainBtn.addEventListener('click', showMainScreen);
 
-// (요청 1) v6: 홈, 종료 버튼
+// v6: 홈, 종료 버튼
 homeBtn.addEventListener('click', () => {
     showMainScreen(); // 확인 창 없이 메인으로
 });
@@ -1004,6 +1018,13 @@ clearHistoryBtn.addEventListener('click', () => {
     saveHistory();
     renderHistory();
 });
+
+// v6: '내 기록만 보기' 필터 체크박스 리스너 추가
+if (filterHistoryCheckbox) {
+    filterHistoryCheckbox.addEventListener('change', () => {
+        renderHistory(); // 체크박스 상태가 바뀌면 기록 목록을 다시 그림
+    });
+}
 
 // --- v5: 고급 기능 리스너 ---
 
