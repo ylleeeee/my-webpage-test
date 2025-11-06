@@ -3,16 +3,6 @@
  * - 기본 세트는 BUILTIN_QUIZ_SETS로 명시 등록 (전역 탐색 X)
  * - 수동 추가/AI 추가/편집/삭제/퀴즈/학습/랜덤/오답/랭킹/기록 모두 포함
  ************************************************************/
-// ★ 여기만 바꿈: 전역에 고정해서 어디서든 접근되게
-window.BUILTIN_QUIZ_SETS = [
-  { key: -1, name: '기본단어1', data: sampleQuizData1 },
-  { key: -2, name: '기본단어2', data: sampleQuizData2 },
-  { key: -3, name: '기본단어3', data: sampleQuizData3 },
-  { key: -4, name: '기본단어4', data: sampleQuizData4 },
-  { key: -5, name: '기본단어5', data: sampleQuizData5 },
-];
-// 추가 시: window.BUILTIN_QUIZ_SETS.push({ key:-6, name:'기본단어6', data: sampleQuizData6 });
-
 /* ===================== 1) 기본 세트 데이터 ===================== */
 
 // ✅ 기본단어1
@@ -76,14 +66,15 @@ const sampleQuizData5 = [
 ];
 
 /* ★★★ 중요: 기본 세트 명시 등록(여기만 유지/추가하면 됨) ★★★ */
-const BUILTIN_QUIZ_SETS = [
+// ★ 여기만 바꿈: 전역에 고정해서 어디서든 접근되게
+window.BUILTIN_QUIZ_SETS = [
   { key: -1, name: '기본단어1', data: sampleQuizData1 },
   { key: -2, name: '기본단어2', data: sampleQuizData2 },
   { key: -3, name: '기본단어3', data: sampleQuizData3 },
   { key: -4, name: '기본단어4', data: sampleQuizData4 },
   { key: -5, name: '기본단어5', data: sampleQuizData5 },
 ];
-// 예: const sampleQuizData6 = [...]; BUILTIN_QUIZ_SETS.push({ key: -6, name: '기본단어6', data: sampleQuizData6 });
+// 추가 시: window.BUILTIN_QUIZ_SETS.push({ key:-6, name:'기본단어6', data: sampleQuizData6 });
 
 /* ===================== 2) DOM 요소 ===================== */
 const startScreen = document.getElementById('start-screen');
