@@ -1,8 +1,9 @@
 /************************************************************
- * 통합본 script.js  (기본 단어장 표시 + 새 단어장 직접 만들기修)
- * - 기본 세트는 BUILTIN_QUIZ_SETS로 명시 등록 (전역 탐색 X)
- * - 수동 추가/AI 추가/편집/삭제/퀴즈/학습/랜덤/오답/랭킹/기록 모두 포함
+ * 통합본 script.js  (기본 단어장 표시 + 새 단어장 직접 만들기 修)
+ * - 기본 세트는 window.BUILTIN_QUIZ_SETS 로 전역 고정
+ * - 수동 추가/AI 추가/편집/삭제/퀴즈/학습/랜덤/오답/랭킹/기록 포함
  ************************************************************/
+
 /* ===================== 1) 기본 세트 데이터 ===================== */
 
 // ✅ 기본단어1
@@ -65,8 +66,7 @@ const sampleQuizData5 = [
   { word: "history", meaning: "역사", phonetic: "/ˈhɪstəri/", question: "history", hint: "과거", options: ["역사", "회사", "호기심이 많은", "공중화장실"], correct: 0, rationale: "'history'은(는) '역사'를 의미합니다." }
 ];
 
-/* ★★★ 중요: 기본 세트 명시 등록(여기만 유지/추가하면 됨) ★★★ */
-// ★ 여기만 바꿈: 전역에 고정해서 어디서든 접근되게
+/* ★★★ 중요: 기본 세트 전역 등록(데이터 정의 아래에 위치) ★★★ */
 window.BUILTIN_QUIZ_SETS = [
   { key: -1, name: '기본단어1', data: sampleQuizData1 },
   { key: -2, name: '기본단어2', data: sampleQuizData2 },
@@ -74,7 +74,7 @@ window.BUILTIN_QUIZ_SETS = [
   { key: -4, name: '기본단어4', data: sampleQuizData4 },
   { key: -5, name: '기본단어5', data: sampleQuizData5 },
 ];
-// 추가 시: window.BUILTIN_QUIZ_SETS.push({ key:-6, name:'기본단어6', data: sampleQuizData6 });
+// 예: const sampleQuizData6 = [...]; window.BUILTIN_QUIZ_SETS.push({ key:-6, name:'기본단어6', data: sampleQuizData6 });
 
 /* ===================== 2) DOM 요소 ===================== */
 const startScreen = document.getElementById('start-screen');
@@ -119,6 +119,7 @@ const cardNextArrow = document.getElementById('card-next-arrow');
 const quizList = document.getElementById('quiz-list');
 const noQuizList = document.getElementById('no-quiz-list');
 const selectionMessage = document.getElementById('selection-message');
+
 const accordionHeaderNewQuiz = document.getElementById('accordion-header-new-quiz');
 const accordionContentNewQuiz = document.getElementById('accordion-content-new-quiz');
 const newQuizNameInput = document.getElementById('new-quiz-name');
@@ -127,6 +128,41 @@ const tempWordCountSpan = document.getElementById('temp-word-count');
 const saveNewQuizBtn = document.getElementById('save-new-quiz-btn');
 const manualAddMessage = document.getElementById('manual-add-message');
 
+// v4: 랭킹/기록/오답 DOM
+const playerNameInput = document.getElementById('player-name');
+const rankingList = document.getElementById('ranking-list');
+const noRankingList = document.getElementById('no-ranking-list');
+const rankingResetBtn = document.getElementById('ranking-reset-btn');
+
+const accordionHeaderOndap = document.getElementById('accordion-header-ondap');
+const accordionContentOndap = document.getElementById('accordion-content-ondap');
+const startWrongQuizBtn = document.getElementById('start-wrong-quiz-btn');
+const wrongQuizMessage = document.getElementById('wrong-quiz-message');
+
+const accordionHeaderHistory = document.getElementById('accordion-header-history');
+const accordionContentHistory = document.getElementById('accordion-content-history');
+const historyList = document.getElementById('history-list');
+const noHistoryList = document.getElementById('no-history-list');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+const filterHistoryCheckbox = document.getElementById('filter-history-checkbox');
+
+// v7: 편집 모달 DOM
+const editModalBackdrop = document.getElementById('edit-modal-backdrop');
+const editModal = document.getElementById('edit-modal');
+const editModalCloseBtn = document.getElementById('edit-modal-close-btn');
+const editModalTitle = document.getElementById('edit-modal-title');
+const editQuizNameInput = document.getElementById('edit-quiz-name');
+const editWordListDiv = document.getElementById('edit-word-list');
+const editWordCountSpan = document.getElementById('edit-word-count');
+const editNewWordInput = document.getElementById('edit-new-word');
+const editNewMeaningInput = document.getElementById('edit-new-meaning');
+const editNewPhoneticInput = document.getElementById('edit-new-phonetic');
+const editAddWordBtn = document.getElementById('edit-add-word-btn');
+const editManualAddMessage = document.getElementById('edit-manual-add-message');
+const editModalSaveBtn = document.getElementById('edit-modal-save-btn');
+const editModalCancelBtn = document.getElementById('edit-modal-cancel-btn');
+
+// v8: AI 단어 추가 DOM
 const ocrImageInput = document.getElementById('ocr-image-input');
 const ocrExtractBtn = document.getElementById('ocr-extract-btn');
 const ocrMessage = document.getElementById('ocr-message');
@@ -135,7 +171,7 @@ const addWordAutoBtn = document.getElementById('add-word-auto-btn');
 const autoAddLoader = document.getElementById('auto-add-loader');
 const autoAddMessage = document.getElementById('auto-add-message');
 
-// 수동 추가 폼 (HTML에 id가 있어야 합니다)
+// 수동 추가 폼
 const newWordManualInput = document.getElementById('new-word-manual');
 const newMeaningManualInput = document.getElementById('new-meaning-manual');
 const newPhoneticManualInput = document.getElementById('new-phonetic-manual');
@@ -182,8 +218,10 @@ function getBuiltinQuizSets() {
   }
   return window.BUILTIN_QUIZ_SETS;
 }
-
-function getAllBuiltinQuestions() { return BUILTIN_QUIZ_SETS.flatMap(s => s.data || []); }
+function getAllBuiltinQuestions() {
+  const sets = getBuiltinQuizSets();
+  return sets.flatMap(s => s.data || []);
+}
 
 /* ===================== 5) 퀴즈 로직 ===================== */
 function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
@@ -269,38 +307,39 @@ function loadWordLists(){ savedWordLists = JSON.parse(localStorage.getItem(STORA
 function saveWordLists(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(savedWordLists)); }
 function formatCreationDate(ts){ if(!ts) return ''; const d=new Date(ts); return `생성일: ${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`; }
 
+// ✅ 정상 버전 (전체 교체)
 function renderWordList() {
-  // ...
+  quizList.innerHTML = '';
+
   const builtinSets = getBuiltinQuizSets();
 
-  // (중략) 기본세트 + 사용자세트 렌더링
-
-  // ★ 이 조건이 꼭 있어야 해요
-  const hasAnyList = (builtinSets.length > 0) || (savedWordLists.length > 0);
-  if (hasAnyList) noQuizList.classList.add('hidden');
-  else noQuizList.classList.remove('hidden');
-}
-
   // 1) 기본 세트 렌더
-  builtinSets.forEach((set, idx)=>{
-    const item=document.createElement('div'); item.className='flex items-center p-3 bg-white border rounded-lg';
+  builtinSets.forEach((set, idx) => {
+    const item = document.createElement('div');
+    item.className = 'flex items-center p-3 bg-white border rounded-lg';
     item.innerHTML = `
       <input type="checkbox" class="quiz-select-cb" id="quiz-cb-builtin-${idx}" data-index="${set.key}">
       <label for="quiz-cb-builtin-${idx}" class="quiz-item-label">
         <span>${set.name} (${set.data.length}문제)</span>
       </label>
       <div class="quiz-item-buttons">
-        <button class="btn btn-xs btn-secondary" disabled title="기본 단어장은 편집할 수 없습니다."><i class="fas fa-pencil-alt"></i></button>
-        <button class="btn btn-xs btn-danger" disabled title="기본 단어장은 삭제할 수 없습니다."><i class="fas fa-trash-alt"></i></button>
-      </div>`;
+        <button class="btn btn-xs btn-secondary" disabled title="기본 단어장은 편집할 수 없습니다.">
+          <i class="fas fa-pencil-alt"></i>
+        </button>
+        <button class="btn btn-xs btn-danger" disabled title="기본 단어장은 삭제할 수 없습니다.">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    `;
     quizList.appendChild(item);
   });
 
   // 2) 사용자 저장본 렌더
-  if(savedWordLists.length>0){
-    savedWordLists.forEach((quiz,index)=>{
-      const it=document.createElement('div'); it.className='flex items-center p-3 bg-white border rounded-lg';
-      const creationDate=formatCreationDate(quiz.creationDate);
+  if (savedWordLists.length > 0) {
+    savedWordLists.forEach((quiz, index) => {
+      const it = document.createElement('div');
+      it.className = 'flex items-center p-3 bg-white border rounded-lg';
+      const creationDate = formatCreationDate(quiz.creationDate);
       it.innerHTML = `
         <input type="checkbox" class="quiz-select-cb" id="quiz-cb-${index}" data-index="${index}">
         <label for="quiz-cb-${index}" class="quiz-item-label">
@@ -308,16 +347,22 @@ function renderWordList() {
           ${creationDate ? `<div class="quiz-item-date">${creationDate}</div>` : ''}
         </label>
         <div class="quiz-item-buttons">
-          <button class="btn btn-xs btn-secondary edit-quiz-btn" data-index="${index}" title="단어장 편집"><i class="fas fa-pencil-alt"></i></button>
-          <button class="btn btn-xs btn-danger delete-quiz-btn" data-index="${index}" title="단어장 삭제"><i class="fas fa-trash-alt"></i></button>
-        </div>`;
+          <button class="btn btn-xs btn-secondary edit-quiz-btn" data-index="${index}" title="단어장 편집">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+          <button class="btn btn-xs btn-danger delete-quiz-btn" data-index="${index}" title="단어장 삭제">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      `;
       quizList.appendChild(it);
     });
   }
 
   // 3) 안내 문구 토글
-  const hasAnyList = (builtinSets.length>0) || (savedWordLists.length>0);
-  if(hasAnyList) noQuizList.classList.add('hidden'); else noQuizList.classList.remove('hidden');
+  const hasAnyList = (builtinSets.length > 0) || (savedWordLists.length > 0);
+  if (hasAnyList) noQuizList.classList.add('hidden');
+  else noQuizList.classList.remove('hidden');
 }
 
 function renderTempWordList(words=tempWords, listEl=tempWordListDiv, countEl=tempWordCountSpan){
@@ -326,7 +371,7 @@ function renderTempWordList(words=tempWords, listEl=tempWordListDiv, countEl=tem
   words.forEach((w,i)=>{
     const div=document.createElement('div'); div.className='flex justify-between items-center edit-word-item';
     div.innerHTML=`<span><strong>${w.word}</strong>: ${w.meaning} ${w.phonetic?`(${w.phonetic})`:''}</span>
-      <button class="delete-temp-word-btn text-red-500 hover:text-red-700" data-index="${i}">
+      <button class="delete-temp-word-btn text-red-500 hover:text-red-700" data-index="${i}" type="button">
         <i class="fas fa-times-circle"></i>
       </button>`;
     listEl.appendChild(div);
@@ -361,12 +406,13 @@ function getCombinedQuestions(){
 }
 
 /* ===================== 8) 랭킹/오답/기록 ===================== */
-function loadPlayerName(){ currentPlayerName=localStorage.getItem(PLAYER_KEY)||''; playerNameInput.value=currentPlayerName; }
+function loadPlayerName(){ currentPlayerName=localStorage.getItem(PLAYER_KEY)||''; if(playerNameInput) playerNameInput.value=currentPlayerName; }
 function savePlayerName(n){ currentPlayerName=n; localStorage.setItem(PLAYER_KEY,n); }
 function loadRankings(){ rankings=JSON.parse(localStorage.getItem(RANKING_KEY) || '{"startDate":'+Date.now()+',"scores":[]}'); }
 function saveRankings(){ rankings.scores.sort((a,b)=>b.totalScore-a.totalScore); rankings.scores=rankings.scores.slice(0,3); localStorage.setItem(RANKING_KEY, JSON.stringify(rankings)); }
 function resetRankings(){ rankings={ startDate:Date.now(), scores:[] }; saveRankings(); renderRankings(); }
 function renderRankings(){
+  if(!rankingList || !noRankingList) return;
   rankingList.innerHTML='';
   const sd=new Date(rankings.startDate); const ds=`${sd.getFullYear()}. ${sd.getMonth()+1}. ${sd.getDate()}.`;
   if(!rankings.scores||rankings.scores.length===0){
@@ -384,42 +430,45 @@ function loadWrongAnswerBank(){ wrongAnswerBank=JSON.parse(localStorage.getItem(
 function saveWrongAnswerBank(){ localStorage.setItem(WRONG_ANSWERS_KEY, JSON.stringify(wrongAnswerBank)); }
 function addWrongAnswer(q){ if(!q.word) return; if(wrongAnswerBank.findIndex(x=>x.word===q.word)===-1){ wrongAnswerBank.push(q); saveWrongAnswerBank(); } }
 function removeWrongAnswer(q){ if(!q.word) return; const i=wrongAnswerBank.findIndex(x=>x.word===q.word); if(i>-1){ wrongAnswerBank.splice(i,1); saveWrongAnswerBank(); } }
-function renderWrongQuizButton(){ const c=wrongAnswerBank.length; if(c>0){ startWrongQuizBtn.disabled=false; startWrongQuizBtn.innerHTML=`<i class="fas fa-redo mr-2"></i> 틀린 문제 (${c}개) 다시 풀기`; wrongQuizMessage.textContent=''; } else { startWrongQuizBtn.disabled=true; startWrongQuizBtn.innerHTML=`<i class="fas fa-redo mr-2"></i> 틀린 문제 (0개) 다시 풀기`; wrongQuizMessage.textContent='틀린 문제가 없습니다.'; wrongQuizMessage.className='text-sm mt-2 h-4 text-center text-gray-500'; } }
+function renderWrongQuizButton(){ if(!startWrongQuizBtn || !wrongQuizMessage) return; const c=wrongAnswerBank.length; if(c>0){ startWrongQuizBtn.disabled=false; startWrongQuizBtn.innerHTML=`<i class="fas fa-redo mr-2"></i> 틀린 문제 (${c}개) 다시 풀기`; wrongQuizMessage.textContent=''; } else { startWrongQuizBtn.disabled=true; startWrongQuizBtn.innerHTML=`<i class="fas fa-redo mr-2"></i> 틀린 문제 (0개) 다시 풀기`; wrongQuizMessage.textContent='틀린 문제가 없습니다.'; wrongQuizMessage.className='text-sm mt-2 h-4 text-center text-gray-500'; } }
 
 function loadHistory(){ quizHistory=JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
 function saveHistory(){ quizHistory=quizHistory.slice(0,1000); localStorage.setItem(HISTORY_KEY, JSON.stringify(quizHistory)); }
 function addHistoryEntry(e){ quizHistory.unshift(e); saveHistory(); }
 function formatTimestamp(ts){ const d=new Date(ts); const days=['일','월','화','수','목','금','토']; return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.(${days[d.getDay()]}) ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function renderHistory(){
+  if(!historyList || !noHistoryList) return;
+  const showOnlyMy = filterHistoryCheckbox?.checked;
+  const list = showOnlyMy ? quizHistory.filter(i=>i.playerName===currentPlayerName) : quizHistory;
+
   historyList.innerHTML='';
-  if(quizHistory.length===0){ noHistoryList.classList.remove('hidden'); noHistoryList.textContent='학습 기록이 없습니다.'; }
-  else{
+  if(list.length===0){
+    noHistoryList.classList.remove('hidden');
+    noHistoryList.textContent = showOnlyMy && quizHistory.length>0 ? '내 학습 기록이 없습니다.' : '학습 기록이 없습니다.';
+  } else {
     noHistoryList.classList.add('hidden');
-    quizHistory.forEach(it=>{ const d=document.createElement('div'); d.className='history-item'; const score=it.total>0?Math.round((it.correct/it.total)*100):0; d.innerHTML=`<span class="timestamp">${formatTimestamp(it.timestamp)}</span><div class="details"><strong>${it.quizName}</strong> (학습자: ${it.playerName||'기록 없음'}) (${it.total}문제 중 ${it.correct}개 정답, ${it.wrong}개 오답) <span class="score-badge">${score}점</span></div>`; historyList.appendChild(d); });
+    list.forEach(it=>{ const d=document.createElement('div'); d.className='history-item'; const score=it.total>0?Math.round((it.correct/it.total)*100):0; d.innerHTML=`<span class="timestamp">${formatTimestamp(it.timestamp)}</span><div class="details"><strong>${it.quizName}</strong> (학습자: ${it.playerName||'기록 없음'}) (${it.total}문제 중 ${it.correct}개 정답, ${it.wrong}개 오답) <span class="score-badge">${score}점</span></div>`; historyList.appendChild(d); });
   }
 }
 
-/* ===================== 9) 편집 모달(선택) ===================== */
+/* ===================== 9) 편집 모달 ===================== */
 function openEditModal(index){
   editingQuizIndex=index; const quiz=savedWordLists[index];
-  editingTempWords = quiz.questions.map(q=>({ word:q.word, meaning:q.meaning, phonetic:q.phonetic||null }));
-  document.getElementById('edit-modal-title').textContent=`"${quiz.name}" 단어장 편집`;
-  document.getElementById('edit-quiz-name').value=quiz.name;
-  renderTempWordList(editingTempWords, document.getElementById('edit-word-list'), document.getElementById('edit-word-count'));
-  document.getElementById('edit-modal').classList.remove('hidden');
-  document.getElementById('edit-modal-backdrop').classList.remove('hidden');
+  editingTempWords = quiz.questions.map(q=>({ word:q.word, meaning:q.meaning, phonetic:q.phonetic || null }));
+  editModalTitle.textContent=`"${quiz.name}" 단어장 편집`;
+  editQuizNameInput.value=quiz.name;
+  renderTempWordList(editingTempWords, editWordListDiv, editWordCountSpan);
+  editModal.classList.remove('hidden'); editModalBackdrop.classList.remove('hidden');
 }
 function closeEditModal(){
-  editingQuizIndex=-1; editingTempWords=[]; document.getElementById('edit-manual-add-message').textContent='';
-  ['edit-new-word','edit-new-meaning','edit-new-phonetic'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('edit-modal').classList.add('hidden');
-  document.getElementById('edit-modal-backdrop').classList.add('hidden');
+  editingQuizIndex=-1; editingTempWords=[]; editManualAddMessage.textContent='';
+  editNewWordInput.value=''; editNewMeaningInput.value=''; editNewPhoneticInput.value='';
+  editModal.classList.add('hidden'); editModalBackdrop.classList.add('hidden');
 }
 function saveEditedQuiz(){
-  const newName=(document.getElementById('edit-quiz-name').value||'').trim();
-  const msg=document.getElementById('edit-manual-add-message');
-  if(!newName){ msg.textContent='단어장 이름을 입력하세요.'; msg.className='text-sm text-red-500 mt-2 h-4'; return; }
-  if(editingTempWords.length<4){ msg.textContent='퀴즈 생성을 위해 최소 4개의 단어가 필요합니다.'; msg.className='text-sm text-red-500 mt-2 h-4'; return; }
+  const newName=(editQuizNameInput.value||'').trim();
+  if(!newName){ editManualAddMessage.textContent='단어장 이름을 입력하세요.'; editManualAddMessage.className='text-sm text-red-500 mt-2 h-4'; return; }
+  if(editingTempWords.length<4){ editManualAddMessage.textContent='퀴즈 생성을 위해 최소 4개의 단어가 필요합니다.'; editManualAddMessage.className='text-sm text-red-500 mt-2 h-4'; return; }
   const orig=savedWordLists[editingQuizIndex]; const newQs=generateQuizFromWords(editingTempWords);
   savedWordLists[editingQuizIndex]={ name:newName, questions:newQs, creationDate:orig.creationDate };
   saveWordLists(); renderWordList(); closeEditModal();
@@ -428,7 +477,7 @@ function saveEditedQuiz(){
 /* ===================== 10) AI API (OCR/번역) ===================== */
 function imageToBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.readAsDataURL(file); r.onload=()=>res(r.result.split(',')[1]); r.onerror=e=>rej(e); }); }
 async function fetchWithRetry(apiUrl,payload,retries=3,delay=1000){
-  const apiKey=""; 
+  const apiKey="";
   while(retries>0){
     try{
       const controller=new AbortController(); const timeoutId=setTimeout(()=>controller.abort(),5000);
@@ -457,8 +506,8 @@ startQuizBtn.addEventListener('click',()=>{ const {questions,title}=getCombinedQ
 startLearnBtn.addEventListener('click',()=>{ const {questions,title}=getCombinedQuestions(); startStudy(questions, title + " 학습"); });
 startRandomQuizBtn.addEventListener('click',()=>{
   const {questions}=getCombinedQuestions();
-  if(questions.length<10){ selectionMessage.textContent='랜덤 퀴즈를 위해 10개 이상의 단어를 선택하세요.'; selectionMessage.className='text-sm mt-2 h-4 text-center text-red-500'; return; }
-  shuffleArray(questions); startQuiz(questions.slice(0,10),'랜덤 퀴즈 (10문제)');
+  if(questions.length<20){ selectionMessage.textContent='랜덤 퀴즈를 위해 20개 이상의 단어를 선택하세요.'; selectionMessage.className='text-sm mt-2 h-4 text-center text-red-500'; return; }
+  shuffleArray(questions); startQuiz(questions.slice(0,20),'랜덤 퀴즈 (20문제)');
 });
 
 // 퀴즈 네비/스와이프
@@ -556,19 +605,20 @@ saveNewQuizBtn.addEventListener('click',()=>{
 });
 
 // 오답/기록
-startWrongQuizBtn.addEventListener('click',()=>{
+startWrongQuizBtn?.addEventListener('click',()=>{
   if(wrongAnswerBank.length===0){ wrongQuizMessage.textContent='다시 풀 틀린 문제가 없습니다.'; wrongQuizMessage.className='text-sm mt-2 h-4 text-center text-red-500'; return; }
   const qs=[...wrongAnswerBank]; shuffleArray(qs); startQuiz(qs,'틀린 문제 퀴즈');
 });
-clearHistoryBtn.addEventListener('click',()=>{ quizHistory=[]; saveHistory(); renderHistory(); });
+clearHistoryBtn?.addEventListener('click',()=>{ quizHistory=[]; saveHistory(); renderHistory(); });
 
-playerNameInput.addEventListener('change',e=>savePlayerName(e.target.value));
-rankingResetBtn.addEventListener('click',resetRankings);
-accordionHeaderOndap.addEventListener('click',()=>{ accordionHeaderOndap.classList.toggle('open'); accordionContentOndap.classList.toggle('open'); });
-accordionHeaderHistory.addEventListener('click',()=>{ accordionHeaderHistory.classList.toggle('open'); accordionContentHistory.classList.toggle('open'); });
+playerNameInput?.addEventListener('change',e=>savePlayerName(e.target.value));
+rankingResetBtn?.addEventListener('click',resetRankings);
+accordionHeaderOndap?.addEventListener('click',()=>{ accordionHeaderOndap.classList.toggle('open'); accordionContentOndap.classList.toggle('open'); });
+accordionHeaderHistory?.addEventListener('click',()=>{ accordionHeaderHistory.classList.toggle('open'); accordionContentHistory.classList.toggle('open'); });
+filterHistoryCheckbox?.addEventListener('change', ()=> renderHistory());
 
 // OCR
-ocrExtractBtn.addEventListener('click',async()=>{
+ocrExtractBtn?.addEventListener('click',async()=>{
   const file=ocrImageInput.files[0];
   if(!file){ ocrMessage.textContent='이미지 파일을 선택하세요.'; ocrMessage.className='ai-message text-red-500'; return; }
   ocrMessage.textContent='AI가 이미지를 분석 중입니다...'; ocrMessage.className='ai-message text-blue-600'; ocrExtractBtn.disabled=true;
