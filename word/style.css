@@ -263,9 +263,8 @@ body {
     opacity: 0.2;
     cursor: not-allowed;
 }
-/* v8: 퀴즈 화살표는 단어 카드 위에 위치 */
-.quiz-arrow {
-    top: 75px; /* .question-text 높이(150px)의 절반 */
+/* 퀴즈 화살표를 단어 카드 위쪽에 위치(선택) */
+#quiz-prev-arrow, #quiz-next-arrow { top: 75px; 
 }
 
 
