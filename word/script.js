@@ -607,7 +607,7 @@ cardPrevArrow.addEventListener('click', (e)=>{e.stopPropagation(); showPrevCard(
 cardNextArrow.addEventListener('click', (e)=>{e.stopPropagation(); showNextCard();});
 exitStudyBtn.addEventListener('click', showStudySummary);
 startQuizFromSummaryBtn.addEventListener('click', ()=>startQuiz(activeStudyData, flashcardTitle.textContent + " 퀴즈"));
-mainFromSummaryBtn2.addEventListener('click', ()=>{ studyCompleteContainer.classList.add('hidden'); });
+mainFromSummaryBtn.addEventListener('click', ()=>{ studyCompleteContainer.classList.add('hidden'); });
 
 // 새 단어장 - AI 자동 추가(모형)
 addWordAutoBtn.addEventListener('click', async ()=>{
