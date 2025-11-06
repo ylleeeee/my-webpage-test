@@ -260,6 +260,7 @@ function showResults() {
     if (total > 0) {
         const historyEntry = {
             timestamp: new Date().getTime(),
+            playerName: currentPlayerName, // 1. 학습자 이름 추가
             quizName: quizTitleEl.textContent,
             total: total,
             correct: score,
@@ -575,9 +576,9 @@ function updateRankings(name, score) {
     
     const existingIndex = rankings.findIndex(r => r.name === name);
     if (existingIndex > -1) {
-        rankings[existingIndex].totalScore += score;
+        rankings[existingIndex].totalScore += (score * 5); // 2. (score * 5)로 수정
     } else {
-        rankings.push({ name: name, totalScore: score });
+        rankings.push({ name: name, totalScore: (score * 5) }); // 2. (score * 5)로 수정
     }
     saveRankings();
     renderRankings();
@@ -658,7 +659,8 @@ function renderHistory() {
             div.innerHTML = `
                 <span class="timestamp">${formatTimestamp(item.timestamp)}</span>
                 <div class="details">
-                    <strong>${item.quizName}</strong>
+                    <!-- 1. 학습자 이름 표시 -->
+                    <strong>${item.quizName}</strong> (학습자: ${item.playerName || '기록 없음'})
                     (${item.total}문제 중 ${item.correct}개 정답, ${item.wrong}개 오답)
                     <span class="score-badge">${score}점</span>
                 </div>
