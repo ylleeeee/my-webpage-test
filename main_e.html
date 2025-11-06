@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 단어 암기 (5단계 - 고급 기능)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* (v4와 동일한 스타일) */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem 0;
+            perspective: 1000px;
+        }
+        .container {
+            max-width: 600px;
+            width: 90%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s ease-in-out; border: none;
+        }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        .btn-xs { padding: 0.25rem 0.75rem; font-size: 0.75rem; } /* v5: 작은 버튼 */
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover:not([disabled]) { background-color: #2563eb; }
+        .btn-secondary { background-color: #6b7280; color: white; }
+        .btn-secondary:hover:not([disabled]) { background-color: #4b5563; }
+        .btn-success { background-color: #2ecc71; color: white; }
+        .btn-success:hover { background-color: #27ae60; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-warning { background-color: #f59e0b; color: white; }
+        .btn-warning:hover:not([disabled]) { background-color: #d97706; }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+
+        /* 아코디언(접기) 메뉴 스타일 */
+        .accordion-header {
+            cursor: pointer;
+            padding: 1rem 1.5rem;
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .accordion-header h2 { font-size: 1.25rem; font-weight: 700; color: #374151; }
+        .accordion-icon { transition: transform 0.3s ease; }
+        .accordion-header.open .accordion-icon { transform: rotate(180deg); }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out; /* 0.3 -> 0.5초 */
+            background-color: #ffffff;
+            padding: 0 1.5rem;
+        }
+        .accordion-content.open {
+            padding: 1.5rem;
+            max-height: 1000px; /* v5: 충분한 높이 */
+            overflow-y: auto;
+        }
+
+        /* 단어장 목록 */
+        .quiz-select-cb {
+            margin-right: 12px; width: 1.25rem; height: 1.25rem;
+            accent-color: #3b82f6; cursor: pointer;
+        }
+        
+        /* v4: 랭킹 스타일 */
+        .ranking-item { display: flex; align-items: center; font-size: 1rem; padding: 0.5rem 0; }
+        .ranking-icon { width: 24px; text-align: center; margin-right: 0.75rem; }
+        .ranking-name { font-weight: 600; color: #1f2937; }
+        .ranking-score { margin-left: auto; color: #4b5563; font-size: 0.9rem; }
+        .fa-crown.gold { color: #f59e0b; }
+        .fa-crown.silver { color: #9ca3af; }
+        .fa-crown.bronze { color: #a16207; }
+
+        /* v4: 학습 기록 스타일 */
+        .history-item {
+            background-color: #f8f9fa; border: 1px solid #e9ecef;
+            padding: 12px 15px; margin-bottom: 8px; border-radius: 8px;
+            font-size: 0.9rem; color: #4b5563;
+        }
+        .history-item .timestamp { font-weight: 600; color: #1f2937; display: block; margin-bottom: 4px; }
+        .history-item .details { font-size: 0.85rem; }
+        .history-item .score-badge {
+            display: inline-block; background-color: #3b82f6; color: white;
+            padding: 2px 8px; border-radius: 12px; font-weight: 600;
+            font-size: 0.8rem; margin-left: 8px;
+        }
+        
+        /* --- 퀴즈 화면 --- */
+        .quiz-container, .study-complete-container { padding: 20px; display: none; }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .quiz-header h2 { font-size: 1.5rem; margin: 0; color: #333; }
+        #progress { font-size: 1rem; color: #777; }
+        .question-text { font-size: 1.3rem; margin-bottom: 20px; color: #2c3e50; }
+        .option-btn {
+            display: block; width: 100%; padding: 12px 15px; margin-bottom: 10px;
+            background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px;
+            font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease;
+        }
+        .option-btn:hover:not([disabled]) { background-color: #e2e6ea; border-color: #dae0e5; }
+        .option-btn.correct { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .option-btn.wrong { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .rationale {
+            margin-top: 15px; padding: 15px; background-color: #eef6fc;
+            border-left: 5px solid #2196F3; border-radius: 4px; display: none;
+        }
+        #next-btn { width: 100%; margin-top: 20px; }
+
+        /* --- 결과 화면 --- */
+        .result-container { text-align: center; display: none; }
+        .result-container h2 { font-size: 2rem; color: #2c3e50; }
+        .score-text { font-size: 1.5rem; margin: 20px 0; color: #3498db; }
+        #wrong-answers-list {
+            margin-top: 30px; text-align: left; border-top: 1px solid #eee; padding-top: 20px;
+        }
+        #wrong-answers-list h3 { font-size: 1.3rem; color: #ef4444; margin-bottom: 15px; text-align: center; }
+        #wrong-answers-list ul { list-style: none; padding: 0; }
+        #wrong-answers-list li {
+            background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 10px 15px;
+            margin-bottom: 8px; border-radius: 4px; font-size: 1rem; color: #be123c;
+        }
+        #wrong-answers-list li strong { color: #721c24; margin-right: 5px; }
+
+        /* --- v2: 플래시카드 --- */
+        .flashcard-container { padding: 20px; display: none; }
+        .flashcard-scene { width: 100%; height: 300px; perspective: 1000px; cursor: pointer; }
+        .flashcard { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; }
+        .flashcard.is-flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px; text-align: center;
+        }
+        .flashcard-front { background-color: #ffffff; border: 1px solid #e0e0e0; color: #2c3e50; }
+        .flashcard-back { background-color: #f8f9fa; color: #333; transform: rotateY(180deg); }
+        #flashcard-progress { margin-top: 15px; font-size: 1rem; color: #777; }
+        #study-summary-list {
+            list-style-type: disc; padding-left: 20px; max-height: 200px; overflow-y: auto;
+            background: #f8f9fa; border-radius: 8px; padding: 15px;
+        }
+        #study-summary-list li { margin-bottom: 8px; }
+
+        /* v5: 로딩 스피너 */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none; /* 기본 숨김 */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- 1. 시작 화면 -->
+    <div id="start-screen" class="container">
+        <div class="p-8">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6">영어 단어 암기 (v5)</h1>
+            </div>
+            
+            <div class="mb-6">
+                <label for="player-name" class="block text-sm font-medium text-gray-700">학습자 이름</label>
+                <input type="text" id="player-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="이름을 입력하세요 (랭킹/기록용)">
+            </div>
+            
+            <div class="border p-6 rounded-lg bg-gray-50 mb-6">
+                <h2 class="text-xl font-bold text-gray-700 mb-3">
+                    <i class="fas fa-trophy mr-2 text-yellow-500"></i> 학습 랭킹
+                </h2>
+                <div id="ranking-list" class="space-y-2"></div>
+                 <p id="no-ranking-list" class="text-sm text-gray-500 text-center py-2 hidden">아직 랭킹이 없습니다.</p>
+            </div>
+            
+            <div class="border p-6 rounded-lg bg-gray-50">
+                <h2 class="text-xl font-bold text-gray-700 mb-3">단어장 목록</h2>
+                <p class="text-sm text-gray-500 mb-4">학습할 단어장을 선택하세요. (1개 이상)</p>
+                <div id="quiz-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto"></div>
+                 <p id="no-quiz-list" class="text-sm text-gray-500 text-center py-4 hidden">저장된 단어장이 없습니다.</p>
+                <div class="flex space-x-2">
+                    <button id="start-learn-btn" class="btn btn-secondary w-1/2" disabled>
+                        <i class="fas fa-book-open mr-2"></i> 단어 학습
+                    </button>
+                    <button id="start-quiz-btn" class="btn btn-primary w-1/2" disabled>
+                        <i class="fas fa-pencil-alt mr-2"></i> 단어 퀴즈
+                    </button>
+                </div>
+                <p id="selection-message" class="text-sm mt-2 h-4 text-center text-blue-600"></p>
+            </div>
+        </div>
+        
+        <div class="accordion-container border-t">
+            <div id="accordion-header-ondap" class="accordion-header">
+                <h2>오답노트</h2>
+                <i class="fas fa-chevron-down accordion-icon"></i>
+            </div>
+            <div id="accordion-content-ondap" class="accordion-content">
+                <p class="text-sm text-gray-500 mb-4">지금까지 틀렸던 문제들만 모아서 다시 풀어볼 수 있습니다.</p>
+                <button id="start-wrong-quiz-btn" class="btn btn-warning w-full" disabled>
+                    <i class="fas fa-redo mr-2"></i> 틀린 문제 (0개) 다시 풀기
+                </button>
+                <p id="wrong-quiz-message" class="text-sm mt-2 h-4 text-center"></p>
+            </div>
+        </div>
+        
+        <!-- v5: 새 단어장 만들기 (OCR, 발음 검색 추가) -->
+        <div class="accordion-container">
+            <div id="accordion-header-new-quiz" class="accordion-header">
+                <h2>새 단어장 직접 만들기</h2>
+                <i class="fas fa-chevron-down accordion-icon"></i>
+            </div>
+            <div id="accordion-content-new-quiz" class="accordion-content">
+                
+                <!-- v5: OCR 기능 -->
+                <div class="border p-4 rounded-lg bg-blue-50 mb-6">
+                    <h3 class="text-md font-bold text-gray-700 mb-2">이미지에서 단어 가져오기 (AI)</h3>
+                    <p class="text-sm text-gray-600 mb-3">단어와 의미가 포함된 이미지를 업로드하세요.</p>
+                    <input type="file" id="ocr-image-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200" accept="image/*">
+                    <button id="ocr-extract-btn" class="btn btn-primary w-full mt-3">
+                        <i class="fas fa-magic mr-2"></i> 텍스트 추출
+                    </button>
+                    <p id="ocr-message" class="text-sm mt-2 h-4"></p>
+                </div>
+                
+                <!-- v5: 단어장 이름 -->
+                <div class="mb-4">
+                    <label for="new-quiz-name" class="block text-sm font-medium text-gray-700">단어장 이름</label>
+                    <input type="text" id="new-quiz-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="예: 토익 필수 단어 1">
+                </div>
+
+                <!-- v5: 추가된 단어 목록 -->
+                <div class="p-4 border rounded-lg bg-white mb-4">
+                    <h3 class="text-md font-medium text-gray-700 mb-2">추가된 단어 목록 (<span id="temp-word-count">0</span>/4개 이상)</h3>
+                    <div id="temp-word-list" class="max-h-24 overflow-y-auto text-sm text-gray-600 space-y-1">
+                        <p class="text-gray-400">단어를 추가해주세요...</p>
+                    </div>
+                </div>
+
+                <!-- v5: 수동 입력 폼 -->
+                <div id="add-word-form" class="space-y-3">
+                    <div class="relative">
+                        <input type="text" id="new-word" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="영어 단어 (예: apple)">
+                    </div>
+                    <input type="text" id="new-meaning" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="한국어 의미 (예: 사과)">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="new-phonetic" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="발음 기호 (선택)">
+                        <button id="fetch-phonetic-btn" class="btn btn-xs btn-secondary">
+                            <i class="fas fa-search mr-1"></i> 자동 검색
+                        </button>
+                        <div id="phonetic-loader" class="loader"></div>
+                    </div>
+                    <button id="add-word-btn" class="btn btn-secondary w-full"><i class="fas fa-plus mr-2"></i>단어 추가</button>
+                </div>
+
+                <button id="save-new-quiz-btn" class="btn btn-primary w-full mt-4"><i class="fas fa-save mr-2"></i>이 단어장 저장하기</button>
+                <p id="manual-add-message" class="text-sm mt-2 h-4"></p>
+            </div>
+        </div>
+        
+        <div class="accordion-container">
+            <div id="accordion-header-history" class="accordion-header">
+                <h2>전체 학습 기록</h2>
+                <i class="fas fa-chevron-down accordion-icon"></i>
+            </div>
+            <div id="accordion-content-history" class="accordion-content">
+                <button id="clear-history-btn" class="btn btn-sm btn-danger w-full mb-4">
+                    <i class="fas fa-trash-alt mr-2"></i> 모든 기록 지우기
+                </button>
+                 <div id="history-list" class="space-y-2 max-h-64 overflow-y-auto pr-2"></div>
+                 <p id="no-history-list" class="text-sm text-gray-500 text-center py-4 hidden">학습 기록이 없습니다.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- v2: 단어 학습 (플래시카드) 화면 -->
+    <div class="container flashcard-container" id="flashcard-container">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="flashcard-title" class="text-xl font-bold">단어 학습</h2>
+            <button id="exit-study-btn" class="btn btn-secondary btn-sm">학습 종료</button>
+        </div>
+        <div class="flashcard-scene" id="flashcard-scene">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-face flashcard-front" id="flashcard-front"></div>
+                <div class="flashcard-face flashcard-back" id="flashcard-back"></div>
+            </div>
+        </div>
+        <div id="flashcard-progress" class="text-center"></div>
+        <div class="flex justify-between mt-6">
+            <button id="prev-card-btn" class="btn btn-secondary">이전 카드</button>
+            <button id="next-card-btn" class="btn btn-primary">다음 카드</button>
+        </div>
+    </div>
+
+    <!-- v2: 학습 완료 화면 -->
+    <div class="container study-complete-container" id="study-complete-container">
+        <h2 class="text-2xl font-bold text-center mb-4">학습 완료!</h2>
+        <p class="text-gray-700 mb-4">다음 단어들을 모두 학습했습니다:</p>
+        <ul id="study-summary-list" class="mb-6"></ul>
+        <p class="text-center text-lg font-medium text-gray-800 mb-6">
+            단어 퀴즈에 도전해 볼까요?
+        </p>
+        <div class="space-y-3">
+            <button id="start-quiz-from-summary-btn" class="btn btn-primary w-full">퀴즈 도전!</button>
+            <button id="main-from-summary-btn" class="btn btn-secondary w-full">메인으로</button>
+        </div>
+    </div>
+
+
+    <!-- 2. 퀴즈 화면 -->
+    <div class="container quiz-container" id="quiz-container">
+        <div class="quiz-header">
+            <h2 id="quiz-title">기본 퀴즈</h2>
+            <span id="progress"></span>
+        </div>
+        <div id="quiz-content">
+            <div class="question-text" id="question"></div>
+            <div id="options"></div>
+            <div class="rationale" id="rationale"></div>
+            <button id="next-btn" class="btn btn-primary" disabled>다음</button>
+        </div>
+        <div class="result-container" id="result">
+            <h2>퀴즈 완료!</h2>
+            <div class="score-text" id="score-display"></div>
+            <div id="wrong-answers-list"></div>
+            <div class="mt-8">
+                <button id="retry-btn" class="btn btn-success">다시 풀기</button>
+                <button id="back-to-main-btn" class="btn btn-secondary">메인으로</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- 1. 기본 퀴즈 데이터 (20문제) ---
+    // v5: 발음 기호(phonetic) 추가
+    const sampleQuizData = [
+        { word: "restroom", meaning: "화장실", phonetic: "/ˈrɛstruːm/", question: "다음 단어 'restroom'의 올바른 한국어 의미는 무엇인가요?", hint: "공공장소", options: ["숙제", "화장실", "비행기", "국가"], correct: 1, rationale: "'restroom'은(는) '화장실'을(를) 의미합니다." },
+        { word: "difficult", meaning: "어려운", phonetic: "/ˈdɪfɪkəlt/", question: "다음 단어 'difficult'의 올바른 한국어 의미는 무엇인가요?", hint: "easy의 반대", options: ["어려운", "거인, 거대한", "소풍", "숙제"], correct: 0, rationale: "'difficult'은(는) '어려운'을(를) 의미합니다." },
+        { word: "hungry", meaning: "배고픈", phonetic: "/ˈhʌŋɡri/", question: "다음 단어 'hungry'의 올바른 한국어 의미는 무엇인가요?", hint: "식욕을 느끼는 상태", options: ["배고픈", "산", "국가", "화장실"], correct: 0, rationale: "'hungry'은(는) '배고픈'을(를) 의미합니다." },
+        { word: "beautiful", meaning: "아름다운", phonetic: "/ˈbjuːtɪfl/", question: "다음 단어 'beautiful'의 올바른 한국어 의미는 무엇인가요?", hint: "시각적/감각적", options: ["어제", "아름다운", "어려운", "옷"], correct: 1, rationale: "'beautiful'은(는) '아름다운'을(를) 의미합니다." },
+        { word: "remember", meaning: "기억하다", phonetic: "/rɪˈmɛmbər/", question: "다음 단어 'remember'의 올바른 한국어 의미는 무엇인가요?", hint: "과거의 일을 떠올림", options: ["비행기", "기억하다", "박물관", "배고픈"], correct: 1, rationale: "'remember'은(는) '기억하다'을(를) 의미합니다." },
+        { word: "museum", meaning: "박물관", phonetic: "/mjuːˈziːəm/", question: "다음 단어 'museum'의 올바른 한국어 의미는 무엇인가요?", hint: "유물, 예술품 전시", options: ["기억하다", "박물관", "호기심이 많은", "소풍"], correct: 1, rationale: "'museum'은(는) '박물관'을(를) 의미합니다." },
+        { word: "curious", meaning: "호기심이 많은", phonetic: "/ˈkjʊəriəs/", question: "다음 단어 'curious'의 올바른 한국어 의미는 무엇인가요?", hint: "알고 싶어 하는 마음", options: ["호기심이 많은", "국가", "감자", "위험"], correct: 0, rationale: "'curious'은(는) '호기심이 많은'을(를) 의미합니다." },
+        { word: "yesterday", meaning: "어제", phonetic: "/ˈjɛstərdeɪ/", question: "다음 단어 'yesterday'의 올바른 한국어 의미는 무엇인가요?", hint: "오늘의 바로 전날", options: ["위험", "산", "숙제", "어제"], correct: 3, rationale: "'yesterday'은(는) '어제'을(를) 의미합니다." },
+        { word: "gesture", meaning: "몸짓, 제스처", phonetic: "/ˈdʒɛstʃər/", question: "다음 단어 'gesture'의 올바른 한국어 의미는 무엇인가요?", hint: "의사 전달 수단", options: ["몸짓, 제스처", "기억하다", "숙제", "배고픈"], correct: 0, rationale: "'gesture'은(는) '몸짓, 제스처'을(를) 의미합니다." },
+        { word: "condition", meaning: "상태, 조건", phonetic: "/kənˈdɪʃn/", question: "다음 단어 'condition'의 올바른 한국어 의미는 무엇인가요?", hint: "사물/사람의 현황", options: ["아름다운", "상태, 조건", "역사", "어제"], correct: 1, rationale: "'condition'은(는) '상태, 조건'을(를) 의미합니다." },
+        { word: "danger", meaning: "위험", phonetic: "/ˈdeɪndʒər/", question: "다음 단어 'danger'의 올바른 한국어 의미는 무엇인가요?", hint: "안전하지 않은 상태", options: ["위험", "옷", "화장실", "숙제"], correct: 0, rationale: "'danger'은(는) '위험'을(를) 의미합니다." },
+        { word: "airplane", meaning: "비행기", phonetic: "/ˈɛərpleɪn/", question: "다음 단어 'airplane'의 올바른 한국어 의미는 무엇인가요?", hint: "하늘을 나는 교통수단", options: ["국가", "옷", "비행기", "역사"], correct: 2, rationale: "'airplane'은(는) '비행기'을(를) 의미합니다." },
+        { word: "history", meaning: "역사", phonetic: "/ˈhɪstəri/", question: "다음 단어 'history'의 올바른 한국어 의미는 무엇인가요?", hint: "과거의 사실, 기록", options: ["감자", "역사", "어려운", "박물관"], correct: 1, rationale: "'history'은(는) '역사'을(를) 의미합니다." },
+        { word: "clothes", meaning: "옷", phonetic: "/kloʊðz/", question: "다음 단어 'clothes'의 올바른 한국어 의미는 무엇인가요?", hint: "몸에 입는 것", options: ["옷", "소풍", "국가", "상태, 조건"], correct: 0, rationale: "'clothes'은(는) '옷'을(를) 의미합니다." },
+        { word: "giant", meaning: "거인, 거대한", phonetic: "/ˈdʒaɪənt/", question: "다음 단어 'giant'의 올바른 한국어 의미는 무엇인가요?", hint: "매우 큰 사람/사물", options: ["거인, 거대한", "옷", "비행기", "감자"], correct: 0, rationale: "'giant'은(는) '거인, 거대한'을(를) 의미합니다." },
+        { word: "nation", meaning: "국가", phonetic: "/ˈneɪʃn/", question: "다음 단어 'nation'의 올바른 한국어 의미는 무엇인가요?", hint: "영토와 국민을 가진 나라", options: ["국가", "기억하다", "화장실", "산"], correct: 0, rationale: "'nation'은(는) '국가'을(를) 의미합니다." },
+        { word: "mountain", meaning: "산", phonetic: "/ˈmaʊntn/", question: "다음 단어 'mountain'의 올바른 한국어 의미는 무엇인가요?", hint: "높이 솟은 지형", options: ["숙제", "산", "역사", "아름다운"], correct: 1, rationale: "'mountain'은(는) '산'을(를) 의미합니다." },
+        { word: "picnic", meaning: "소풍", phonetic: "/ˈpɪknɪk/", question: "다음 단어 'picnic'의 올바른 한국어 의미는 무엇인가요?", hint: "야외로 놀러 가는 것", options: ["호기심이 많은", "소풍", "어제", "기억하다"], correct: 1, rationale: "'picnic'은(는) '소풍'을(를) 의미합니다." },
+        { word: "potato", meaning: "감자", phonetic: "/pəˈteɪtoʊ/", question: "다음 단어 'potato'의 올바른 한국어 의미는 무엇인가요?", hint: "땅속 덩이줄기 채소", options: ["몸짓, 제스처", "감자", "위험", "어려운"], correct: 1, rationale: "'potato'은(는) '감자'을(를) 의미합니다." },
+        { word: "homework", meaning: "숙제", phonetic: "/ˈhoʊmwɜːrk/", question: "다음 단어 'homework'의 올바른 한국어 의미는 무엇인가요?", hint: "학생이 집에서 하는 과제", options: ["숙제", "상태, 조건", "어제", "산"], correct: 0, rationale: "'homework'은(는) '숙제'을(를) 의미합니다." }
+    ];
+
+    // --- 2. DOM 요소 ---
+    const startScreen = document.getElementById('start-screen');
+    const startQuizBtn = document.getElementById('start-quiz-btn');
+    
+    // 퀴즈 화면
+    const quizContainer = document.getElementById('quiz-container');
+    const quizTitleEl = document.getElementById('quiz-title');
+    const progressEl = document.getElementById('progress');
+    const quizContentEl = document.getElementById('quiz-content');
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const rationaleEl = document.getElementById('rationale');
+    const nextBtn = document.getElementById('next-btn');
+    
+    // 결과 화면
+    const resultEl = document.getElementById('result');
+    const scoreDisplayEl = document.getElementById('score-display');
+    const wrongAnswersListDiv = document.getElementById('wrong-answers-list');
+    const retryBtn = document.getElementById('retry-btn');
+    const backToMainBtn = document.getElementById('back-to-main-btn');
+
+    // v2: 플래시카드 DOM 요소
+    const startLearnBtn = document.getElementById('start-learn-btn');
+    const flashcardContainer = document.getElementById('flashcard-container');
+    const flashcard = document.getElementById('flashcard');
+    const flashcardTitle = document.getElementById('flashcard-title');
+    const flashcardFront = document.getElementById('flashcard-front');
+    const flashcardBack = document.getElementById('flashcard-back');
+    const flashcardProgress = document.getElementById('flashcard-progress');
+    const prevCardBtn = document.getElementById('prev-card-btn');
+    const nextCardBtn = document.getElementById('next-card-btn');
+    const exitStudyBtn = document.getElementById('exit-study-btn');
+    const studyCompleteContainer = document.getElementById('study-complete-container');
+    const studySummaryList = document.getElementById('study-summary-list');
+    const startQuizFromSummaryBtn = document.getElementById('start-quiz-from-summary-btn');
+    const mainFromSummaryBtn = document.getElementById('main-from-summary-btn');
+
+    // v3: 단어장 저장 DOM 요소
+    const quizList = document.getElementById('quiz-list');
+    const noQuizList = document.getElementById('no-quiz-list');
+    const selectionMessage = document.getElementById('selection-message');
+    const accordionHeaderNewQuiz = document.getElementById('accordion-header-new-quiz');
+    const accordionContentNewQuiz = document.getElementById('accordion-content-new-quiz');
+    const newQuizNameInput = document.getElementById('new-quiz-name');
+    const tempWordListDiv = document.getElementById('temp-word-list');
+    const tempWordCountSpan = document.getElementById('temp-word-count');
+    const newWordInput = document.getElementById('new-word');
+    const newMeaningInput = document.getElementById('new-meaning');
+    // const newHintInput = document.getElementById('new-hint'); // v5: phonetic으로 대체
+    const addWordBtn = document.getElementById('add-word-btn');
+    const saveNewQuizBtn = document.getElementById('save-new-quiz-btn');
+    const manualAddMessage = document.getElementById('manual-add-message');
+    
+    // v4: 랭킹, 기록, 오답노트 DOM 요소
+    const playerNameInput = document.getElementById('player-name');
+    const rankingList = document.getElementById('ranking-list');
+    const noRankingList = document.getElementById('no-ranking-list');
+    
+    const accordionHeaderOndap = document.getElementById('accordion-header-ondap');
+    const accordionContentOndap = document.getElementById('accordion-content-ondap');
+    const startWrongQuizBtn = document.getElementById('start-wrong-quiz-btn');
+    const wrongQuizMessage = document.getElementById('wrong-quiz-message');
+    
+    const accordionHeaderHistory = document.getElementById('accordion-header-history');
+    const accordionContentHistory = document.getElementById('accordion-content-history');
+    const historyList = document.getElementById('history-list');
+    const noHistoryList = document.getElementById('no-history-list');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    
+    // v5: OCR, 발음 검색 DOM 요소
+    const ocrImageInput = document.getElementById('ocr-image-input');
+    const ocrExtractBtn = document.getElementById('ocr-extract-btn');
+    const ocrMessage = document.getElementById('ocr-message');
+    const newPhoneticInput = document.getElementById('new-phonetic');
+    const fetchPhoneticBtn = document.getElementById('fetch-phonetic-btn');
+    const phoneticLoader = document.getElementById('phonetic-loader');
+
+
+    // --- 3. 퀴즈/학습 상태 변수 ---
+    let activeQuizData = []; 
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let wrongAnswers = []; 
+
+    let activeStudyData = []; 
+    let currentCardIndex = 0;
+    let autoFlipTimer; 
+
+    // v3: 단어장 저장 변수
+    let savedWordLists = [];
+    const STORAGE_KEY = 'englishQuizLists_v5'; // v5로 키 변경
+    let tempWords = []; 
+
+    // v4: 랭킹, 기록, 오답노트 변수
+    let currentPlayerName = '';
+    const PLAYER_KEY = 'englishQuizPlayer_v5';
+    let rankings = []; 
+    const RANKING_KEY = 'englishQuizRankings_v5';
+    let wrongAnswerBank = []; 
+    const WRONG_ANSWERS_KEY = 'englishQuizWrongAnswers_v5';
+    let quizHistory = []; 
+    const HISTORY_KEY = 'englishQuizHistory_v5';
+
+    // --- 4. 퀴즈 함수 (v1, v2) ---
+    
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function startQuiz(quizData, title = "단어 퀴즈") {
+        if (quizData.length === 0) {
+             selectionMessage.textContent = '퀴즈를 시작하려면 단어를 1개 이상 선택하세요.';
+             selectionMessage.className = 'text-sm mt-2 h-4 text-center text-red-500';
+             return;
+        }
+        activeQuizData = quizData.map(q => ({...q, answered: false, selected: -1})); 
+        shuffleArray(activeQuizData); 
+        
+        currentQuestionIndex = 0;
+        score = 0;
+        wrongAnswers = [];
+        
+        quizTitleEl.textContent = title; 
+        startScreen.classList.add('hidden');
+        flashcardContainer.style.display = 'none'; 
+        studyCompleteContainer.style.display = 'none'; 
+        quizContainer.style.display = 'block';
+        quizContentEl.style.display = 'block';
+        resultEl.style.display = 'none';
+        wrongAnswersListDiv.innerHTML = '';
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        resetState();
+        const currentQuestion = activeQuizData[currentQuestionIndex];
+        
+        progressEl.textContent = `문제 ${currentQuestionIndex + 1} / ${activeQuizData.length}`;
+        questionEl.textContent = currentQuestion.question;
+        
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.classList.add('option-btn');
+            button.textContent = option;
+            button.dataset.index = index;
+            button.addEventListener('click', selectAnswer);
+            optionsEl.appendChild(button);
+        });
+    }
+
+    function resetState() {
+        optionsEl.innerHTML = '';
+        rationaleEl.style.display = 'none';
+        rationaleEl.textContent = '';
+        nextBtn.disabled = true;
+    }
+
+    function selectAnswer(e) {
+        const selectedBtn = e.target;
+        const selectedIndex = parseInt(selectedBtn.dataset.index);
+        const currentQuestion = activeQuizData[currentQuestionIndex];
+        const correctIndex = currentQuestion.correct;
+        
+        if (currentQuestion.answered) return; 
+        currentQuestion.answered = true;
+        currentQuestion.selected = selectedIndex;
+        
+        if (selectedIndex === correctIndex) {
+            selectedBtn.classList.add('correct');
+            score++;
+            removeWrongAnswer(currentQuestion); 
+        } else {
+            selectedBtn.classList.add('wrong');
+            wrongAnswers.push(currentQuestion); 
+            addWrongAnswer(currentQuestion); 
+        }
+        
+        Array.from(optionsEl.children).forEach(btn => {
+            if (parseInt(btn.dataset.index) === correctIndex) {
+                btn.classList.add('correct');
+            }
+            btn.disabled = true;
+        });
+
+        if (currentQuestion.rationale) {
+            rationaleEl.textContent = currentQuestion.rationale;
+            rationaleEl.style.display = 'block';
+        }
+        
+        nextBtn.disabled = false;
+    }
+
+    function showResults() {
+        quizContentEl.style.display = 'none';
+        resultEl.style.display = 'block';
+        scoreDisplayEl.textContent = `총 ${activeQuizData.length}문제 중 ${score}개를 맞추셨습니다!`;
+
+        const total = activeQuizData.length;
+        if (total > 0) {
+            const historyEntry = {
+                timestamp: new Date().getTime(),
+                quizName: quizTitleEl.textContent,
+                total: total,
+                correct: score,
+                wrong: total - score
+            };
+            addHistoryEntry(historyEntry);
+            updateRankings(currentPlayerName, score);
+        }
+
+        wrongAnswersListDiv.innerHTML = ''; 
+        if (wrongAnswers.length > 0) {
+            const h3 = document.createElement('h3');
+            h3.textContent = '틀린 문제 목록';
+            wrongAnswersListDiv.appendChild(h3);
+
+            const ul = document.createElement('ul');
+            wrongAnswers.forEach(q => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${q.word}</strong>: ${q.meaning}`;
+                ul.appendChild(li);
+            });
+            wrongAnswersListDiv.appendChild(ul);
+        } else {
+            const p = document.createElement('p');
+            p.textContent = '모든 문제를 맞추셨습니다! 🎉';
+            p.className = 'text-center text-green-600 font-bold mt-4';
+            wrongAnswersListDiv.appendChild(p);
+        }
+    }
+
+    function handleNextButton() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < activeQuizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    // --- v2: 플래시카드 함수 ---
+    function startStudy(studyData, title = "단어 학습") {
+         if (studyData.length === 0) {
+             selectionMessage.textContent = '학습을 시작하려면 단어를 1개 이상 선택하세요.';
+             selectionMessage.className = 'text-sm mt-2 h-4 text-center text-red-500';
+             return;
+        }
+        activeStudyData = studyData.map(q => ({...q})); 
+        shuffleArray(activeStudyData);
+        currentCardIndex = 0;
+
+        flashcardTitle.textContent = title; 
+        startScreen.classList.add('hidden');
+        flashcardContainer.style.display = 'block';
+        studyCompleteContainer.style.display = 'none';
+
+        loadCard(currentCardIndex);
+    }
+
+    function loadCard(index) {
+        if (autoFlipTimer) clearTimeout(autoFlipTimer);
+        const card = activeStudyData[index];
+        
+        // v5: 발음 기호 표시
+        flashcardFront.innerHTML = `
+            <div class="text-4xl md:text-5xl font-bold">${card.word}</div>
+            <div class="text-xl md:text-2xl text-gray-500 mt-3">
+                ${card.phonetic ? card.phonetic : '&nbsp;'} 
+            </div>
+            <div class="text-lg text-gray-400 mt-4">(클릭하여 뒤집기)</div>
+        `;
+        flashcardBack.innerHTML = `
+            <div class="text-3xl md:text-4xl font-bold">${card.meaning}</div>
+            <div class="text-lg text-gray-600 mt-3">${card.hint || ''}</div>
+        `;
+        
+        flashcard.classList.remove('is-flipped'); 
+        flashcardProgress.textContent = `카드 ${index + 1} / ${activeStudyData.length}`;
+        prevCardBtn.disabled = (index === 0);
+        
+        autoFlipTimer = setTimeout(() => {
+            flipCard();
+        }, 3000);
+    }
+
+    function flipCard() {
+        if (autoFlipTimer) clearTimeout(autoFlipTimer);
+        flashcard.classList.toggle('is-flipped');
+    }
+
+    function showNextCard() {
+        if (currentCardIndex < activeStudyData.length - 1) {
+            currentCardIndex++;
+            loadCard(currentCardIndex);
+        } else {
+            showStudySummary();
+        }
+    }
+
+    function showPrevCard() {
+        if (currentCardIndex > 0) {
+            currentCardIndex--;
+            loadCard(currentCardIndex);
+        }
+    }
+
+    function showStudySummary() {
+        flashcardContainer.style.display = 'none';
+        studyCompleteContainer.style.display = 'block';
+        
+        studySummaryList.innerHTML = '';
+        activeStudyData.forEach(card => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${card.word}</strong>: ${card.meaning}`;
+            studySummaryList.appendChild(li);
+        });
+    }
+
+    function showMainScreen() {
+        quizContainer.style.display = 'none';
+        resultEl.style.display = 'none';
+        flashcardContainer.style.display = 'none';
+        studyCompleteContainer.style.display = 'none';
+        startScreen.classList.remove('hidden');
+        
+        renderWordList();
+        renderRankings();
+        renderWrongQuizButton();
+        renderHistory();
+        
+        startLearnBtn.disabled = true;
+        startQuizBtn.disabled = true;
+        selectionMessage.textContent = '';
+    }
+
+
+    // --- v3: 단어장 저장 함수 ---
+
+    function loadWordLists() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        savedWordLists = stored ? JSON.parse(stored) : [];
+    }
+
+    function saveWordLists() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedWordLists));
+    }
+
+    function renderWordList() {
+        quizList.innerHTML = '';
+        
+        const sampleQuizItem = document.createElement('div');
+        sampleQuizItem.className = 'flex items-center p-3 bg-white border rounded-lg';
+        sampleQuizItem.innerHTML = `
+            <input type="checkbox" class="quiz-select-cb" id="quiz-cb-sample" data-index="-1">
+            <label for="quiz-cb-sample" class="font-medium text-gray-700 flex-grow cursor-pointer">
+                기본 퀴즈 (${sampleQuizData.length}문제)
+            </label>
+        `;
+        quizList.appendChild(sampleQuizItem);
+
+        if (savedWordLists.length === 0) {
+            noQuizList.classList.remove('hidden');
+        } else {
+            noQuizList.classList.add('hidden');
+            savedWordLists.forEach((quiz, index) => {
+                const listItem = document.createElement('div');
+                listItem.className = 'flex items-center p-3 bg-white border rounded-lg';
+                listItem.innerHTML = `
+                    <input type="checkbox" class="quiz-select-cb" id="quiz-cb-${index}" data-index="${index}">
+                    <label for="quiz-cb-${index}" class="font-medium text-gray-700 flex-grow cursor-pointer">${quiz.name} (${quiz.questions.length}문제)</label>
+                    <button class="btn btn-sm btn-danger delete-quiz-btn" data-index="${index}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                quizList.appendChild(listItem);
+            });
+        }
+    }
+
+    function renderTempWordList() {
+        tempWordListDiv.innerHTML = '';
+        if (tempWords.length === 0) {
+            tempWordListDiv.innerHTML = '<p class="text-gray-400">단어를 추가해주세요...</p>';
+        }
+        tempWords.forEach(w => {
+            const div = document.createElement('div');
+            div.className = "flex justify-between items-center";
+            div.innerHTML = `
+                <span><strong>${w.word}</strong>: ${w.meaning} ${w.phonetic ? `(${w.phonetic})` : ''}</span>
+                <button class="delete-temp-word-btn text-red-500 hover:text-red-700" data-word="${w.word}">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
+            tempWordListDiv.appendChild(div);
+        });
+        tempWordCountSpan.textContent = tempWords.length;
+    }
+
+    function generateQuizFromWords(words) {
+        const questions = [];
+        const allMeanings = words.map(w => w.meaning);
+
+        for (const wordData of words) {
+            // v5: phonetic 추가
+            const { word, meaning, hint, phonetic } = wordData;
+            
+            const question = `다음 단어 '${word}'의 올바른 한국어 의미는 무엇인가요?`;
+            const rationale = `'${word}' (${phonetic || 'N/A'})은(는) '${meaning}'을(를) 의미합니다.`;
+            
+            let distractors = allMeanings.filter(m => m !== meaning);
+            shuffleArray(distractors);
+            distractors = distractors.slice(0, 3);
+
+            const baseDistractors = ["컴퓨터", "연필", "학교", "물병", "사랑", "시간", "하늘"];
+            let distractorIdx = 0;
+            while (distractors.length < 3) {
+                const newDistractor = baseDistractors[distractorIdx % baseDistractors.length];
+                distractorIdx++;
+                if (newDistractor !== meaning && !distractors.includes(newDistractor)) {
+                    distractors.push(newDistractor);
+                }
+            }
+            
+            let options = [...distractors, meaning];
+            shuffleArray(options); 
+            
+            const correctIndex = options.indexOf(meaning);
+            
+            questions.push({
+                word, meaning, hint: hint || '', phonetic: phonetic || null, // v5: phonetic 저장
+                question, options, correct: correctIndex, rationale
+            });
+        }
+        return questions;
+    }
+
+    function getCombinedQuestions() {
+        const checkedBoxes = quizList.querySelectorAll('.quiz-select-cb:checked');
+        let combinedQuestions = [];
+        let combinedNames = [];
+
+        checkedBoxes.forEach(box => {
+            const index = parseInt(box.dataset.index, 10);
+            if (index === -1) { 
+                combinedQuestions.push(...sampleQuizData);
+                combinedNames.push('기본 퀴즈');
+            } else {
+                const quiz = savedWordLists[index];
+                combinedQuestions.push(...quiz.questions);
+                combinedNames.push(quiz.name);
+            }
+        });
+        
+        return { questions: combinedQuestions, title: combinedNames.join(' + ') || '단어' };
+    }
+    
+    // --- v4: 랭킹, 기록, 오답노트 함수 ---
+
+    function loadPlayerName() {
+        currentPlayerName = localStorage.getItem(PLAYER_KEY) || '';
+        playerNameInput.value = currentPlayerName;
+    }
+
+    function savePlayerName(name) {
+        currentPlayerName = name;
+        localStorage.setItem(PLAYER_KEY, name);
+    }
+    
+    function loadRankings() {
+        const stored = localStorage.getItem(RANKING_KEY);
+        rankings = stored ? JSON.parse(stored) : []; 
+    }
+
+    function saveRankings() {
+        rankings.sort((a, b) => b.totalScore - a.totalScore); 
+        rankings = rankings.slice(0, 3); 
+        localStorage.setItem(RANKING_KEY, JSON.stringify(rankings));
+    }
+
+    function renderRankings() {
+        rankingList.innerHTML = '';
+        if (rankings.length === 0) {
+            noRankingList.classList.remove('hidden');
+        } else {
+            noRankingList.classList.add('hidden');
+            const icons = [
+                '<i class="fas fa-crown gold"></i>', 
+                '<i class="fas fa-crown silver"></i>', 
+                '<i class="fas fa-crown bronze"></i>'
+            ];
+            rankings.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = 'ranking-item';
+                div.innerHTML = `
+                    <span class="ranking-icon">${icons[index]}</span>
+                    <span class="ranking-name">${entry.name}</span>
+                    <span class="ranking-score">${entry.totalScore}점 (누적)</span>
+                `;
+                rankingList.appendChild(div);
+            });
+        }
+    }
+    
+    function updateRankings(name, score) {
+        if (!name || score === 0) return; 
+        
+        const existingIndex = rankings.findIndex(r => r.name === name);
+        if (existingIndex > -1) {
+            rankings[existingIndex].totalScore += score;
+        } else {
+            rankings.push({ name: name, totalScore: score });
+        }
+        saveRankings();
+        renderRankings();
+    }
+    
+    function loadWrongAnswerBank() {
+        const stored = localStorage.getItem(WRONG_ANSWERS_KEY);
+        wrongAnswerBank = stored ? JSON.parse(stored) : []; 
+    }
+    
+    function saveWrongAnswerBank() {
+        localStorage.setItem(WRONG_ANSWERS_KEY, JSON.stringify(wrongAnswerBank));
+    }
+    
+    function addWrongAnswer(question) {
+        if (!question.word) return; 
+        const existingIndex = wrongAnswerBank.findIndex(q => q.word === question.word);
+        if (existingIndex === -1) {
+            wrongAnswerBank.push(question);
+            saveWrongAnswerBank();
+        }
+    }
+
+    function removeWrongAnswer(question) {
+        if (!question.word) return;
+        const existingIndex = wrongAnswerBank.findIndex(q => q.word === question.word);
+        if (existingIndex > -1) {
+            wrongAnswerBank.splice(existingIndex, 1);
+            saveWrongAnswerBank();
+        }
+    }
+    
+    function renderWrongQuizButton() {
+        const count = wrongAnswerBank.length;
+        if (count > 0) {
+            startWrongQuizBtn.disabled = false;
+            startWrongQuizBtn.innerHTML = `<i class="fas fa-redo mr-2"></i> 틀린 문제 (${count}개) 다시 풀기`;
+            wrongQuizMessage.textContent = '';
+        } else {
+            startWrongQuizBtn.disabled = true;
+            startWrongQuizBtn.innerHTML = `<i class="fas fa-redo mr-2"></i> 틀린 문제 (0개) 다시 풀기`;
+            wrongQuizMessage.textContent = '틀린 문제가 없습니다.';
+            wrongQuizMessage.className = 'text-sm mt-2 h-4 text-center text-gray-500';
+        }
+    }
+    
+    function loadHistory() {
+        const stored = localStorage.getItem(HISTORY_KEY);
+        quizHistory = stored ? JSON.parse(stored) : [];
+    }
+    
+    function saveHistory() {
+        quizHistory = quizHistory.slice(0, 1000); 
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(quizHistory));
+    }
+    
+    function addHistoryEntry(entry) {
+        quizHistory.unshift(entry); 
+        saveHistory();
+    }
+    
+    function formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.(${days[date.getDay()]}) ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function renderHistory() {
+        historyList.innerHTML = '';
+        if (quizHistory.length === 0) {
+            noHistoryList.classList.remove('hidden');
+        } else {
+            noHistoryList.classList.add('hidden');
+            quizHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                const score = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+                div.innerHTML = `
+                    <span class="timestamp">${formatTimestamp(item.timestamp)}</span>
+                    <div class="details">
+                        <strong>${item.quizName}</strong>
+                        (${item.total}문제 중 ${item.correct}개 정답, ${item.wrong}개 오답)
+                        <span class="score-badge">${score}점</span>
+                    </div>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+    }
+    
+    // --- v5: 발음 기호 검색 함수 ---
+    async function fetchPhonetic(word) {
+        phoneticLoader.style.display = 'block';
+        fetchPhoneticBtn.disabled = true;
+        
+        // 무료 사전 API (dictionaryapi.dev) 사용
+        const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+        try {
+            // 3초 타임아웃 설정
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                newPhoneticInput.value = '';
+                manualAddMessage.textContent = '발음 기호를 찾지 못했습니다.';
+                manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+                return null;
+            }
+            const data = await response.json();
+            
+            if (data[0] && data[0].phonetics) {
+                // IPA 발음 기호 텍스트를 우선적으로 찾음
+                const phoneticMatch = data[0].phonetics.find(p => p.text);
+                if (phoneticMatch && phoneticMatch.text) {
+                    newPhoneticInput.value = phoneticMatch.text; // 예: /æpəl/
+                    manualAddMessage.textContent = '발음 기호를 찾았습니다.';
+                    manualAddMessage.className = 'text-sm text-green-600 mt-2 h-4';
+                    return phoneticMatch.text;
+                }
+            }
+            newPhoneticInput.value = '';
+            manualAddMessage.textContent = '발음 기호를 찾지 못했습니다.';
+            manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+            return null;
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                 manualAddMessage.textContent = '발음 검색 시간이 초과되었습니다.';
+                 manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+            } else {
+                console.error("Phonetic fetch error:", error);
+                manualAddMessage.textContent = '발음 기호 검색 중 오류 발생.';
+                manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+            }
+            return null;
+        } finally {
+            phoneticLoader.style.display = 'none';
+            fetchPhoneticBtn.disabled = false;
+        }
+    }
+    
+    // --- v5: OCR (Gemini) 함수 ---
+    
+    // 1. 이미지를 Base64로 변환하는 함수
+    function imageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]); // 'data:image/jpeg;base64,' 부분 제거
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // 2. Gemini API 호출 함수
+    async function callGeminiApi(base64ImageData) {
+        // [2025-08-26] 요청에 따라 API 키는 빈 문자열로 둡니다.
+        const apiKey = ""; // 캔버스 환경에서 자동으로 제공됩니다.
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        // Gemini에게 원하는 JSON 형식을 명확하게 지시합니다.
+                        { text: "Analyze this image of a vocabulary note. Extract the English word and its Korean meaning. Provide the output *only* in JSON format like {\"word\": \"EnglishWord\", \"meaning\": \"KoreanMeaning\"}. If you cannot find a clear word/meaning pair, return {\"word\": \"\", \"meaning\": \"\"}." },
+                        {
+                            inlineData: {
+                                mimeType: "image/jpeg", // 기본 JPEG, PNG도 가능
+                                data: base64ImageData
+                            }
+                        }
+                    ]
+                }
+            ],
+            generationConfig: {
+                // Gemini가 JSON 형식으로 응답하도록 강제합니다.
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        "word": { "type": "STRING" },
+                        "meaning": { "type": "STRING" }
+                    },
+                    propertyOrdering: ["word", "meaning"]
+                }
+            }
+        };
+        
+        // API 호출 (지연/오류 처리를 위한 재시도 포함)
+        let response;
+        let retries = 3;
+        let delay = 1000;
+
+        while (retries > 0) {
+            try {
+                // 5초 타임아웃
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
+                        const jsonText = result.candidates[0].content.parts[0].text;
+                        return JSON.parse(jsonText); // {word: "...", meaning: "..."}
+                    } else {
+                        throw new Error("Invalid API response structure.");
+                    }
+                } else if (response.status === 429 || response.status >= 500) {
+                    // API 과부하 또는 서버 오류 시 재시도
+                    console.warn(`API call failed with status ${response.status}. Retrying in ${delay / 1000}s...`);
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2; // Exponential backoff
+                    retries--;
+                } else {
+                    // 400 Bad Request 등 재시도가 의미 없는 오류
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error("Gemini API error:", error);
+                retries--;
+                if (retries <= 0) {
+                    return null; // 최종 실패
+                }
+                await new Promise(res => setTimeout(res, delay));
+                delay *= 2;
+            }
+        }
+        return null; // 모든 재시도 실패
+    }
+
+
+    // --- 5. 이벤트 리스너 ---
+    
+    startQuizBtn.addEventListener('click', () => {
+        const { questions, title } = getCombinedQuestions();
+        startQuiz(questions, title + " 퀴즈");
+    });
+    
+    startLearnBtn.addEventListener('click', () => {
+        const { questions, title } = getCombinedQuestions();
+        startStudy(questions, title + " 학습");
+    });
+
+    // 퀴즈 화면
+    nextBtn.addEventListener('click', handleNextButton);
+    retryBtn.addEventListener('click', () => startQuiz(activeQuizData, quizTitleEl.textContent)); 
+    backToMainBtn.addEventListener('click', showMainScreen);
+
+    // v2: 플래시카드 이벤트 리스너
+    flashcard.addEventListener('click', flipCard);
+    prevCardBtn.addEventListener('click', showPrevCard);
+    nextCardBtn.addEventListener('click', showNextCard);
+    exitStudyBtn.addEventListener('click', showStudySummary);
+    startQuizFromSummaryBtn.addEventListener('click', () => startQuiz(activeStudyData, flashcardTitle.textContent + " 퀴즈"));
+    mainFromSummaryBtn.addEventListener('click', showMainScreen);
+
+    // v3: 단어장 목록 및 생성 이벤트 리스너
+    quizList.addEventListener('change', (e) => {
+        if (e.target.classList.contains('quiz-select-cb')) {
+            const checkedBoxes = quizList.querySelectorAll('.quiz-select-cb:checked');
+            if (checkedBoxes.length > 0) {
+                startLearnBtn.disabled = false;
+                startQuizBtn.disabled = false;
+                selectionMessage.textContent = `${checkedBoxes.length}개 단어장 선택됨`;
+            } else {
+                startLearnBtn.disabled = true;
+                startQuizBtn.disabled = true;
+                selectionMessage.textContent = '';
+            }
+        }
+    });
+
+    quizList.addEventListener('click', (e) => {
+        const target = e.target.closest('.delete-quiz-btn');
+        if (target) {
+            const index = parseInt(target.dataset.index, 10);
+            savedWordLists.splice(index, 1);
+            saveWordLists();
+            renderWordList();
+            startLearnBtn.disabled = true; 
+            startQuizBtn.disabled = true;
+            selectionMessage.textContent = '';
+        }
+    });
+
+    // 아코디언 메뉴 (접기/펼치기)
+    accordionHeaderNewQuiz.addEventListener('click', () => {
+        accordionHeaderNewQuiz.classList.toggle('open');
+        accordionContentNewQuiz.classList.toggle('open');
+    });
+
+    // v5: '단어 추가' 버튼 (발음 기호 포함)
+    addWordBtn.addEventListener('click', () => {
+        const word = newWordInput.value.trim();
+        const meaning = newMeaningInput.value.trim();
+        const phonetic = newPhoneticInput.value.trim(); // v5
+
+        if (word && meaning) {
+            if (tempWords.find(w => w.word.toLowerCase() === word.toLowerCase())) {
+                manualAddMessage.textContent = `'${word}'는(은) 이미 추가된 단어입니다.`;
+                manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+                return;
+            }
+            tempWords.push({ word, meaning, hint: '', phonetic: phonetic || null }); // v5
+            renderTempWordList();
+            newWordInput.value = '';
+            newMeaningInput.value = '';
+            newPhoneticInput.value = ''; // v5
+            newWordInput.focus();
+            manualAddMessage.textContent = `'${word}' 단어가 추가되었습니다.`;
+            manualAddMessage.className = 'text-sm text-green-600 mt-2 h-4';
+        } else {
+            manualAddMessage.textContent = '단어와 의미를 모두 입력해주세요.';
+            manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+        }
+    });
+
+    tempWordListDiv.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.delete-temp-word-btn');
+        if (deleteBtn) {
+            const wordToDelete = deleteBtn.dataset.word;
+            tempWords = tempWords.filter(w => w.word !== wordToDelete);
+            renderTempWordList();
+            manualAddMessage.textContent = `'${wordToDelete}' 단어가 삭제되었습니다.`;
+            manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+        }
+    });
+
+    saveNewQuizBtn.addEventListener('click', () => {
+        const name = newQuizNameInput.value.trim();
+        if (!name) {
+            manualAddMessage.textContent = '단어장 이름을 입력해주세요.';
+            manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+            return;
+        }
+        if (tempWords.length < 4) {
+            manualAddMessage.textContent = '퀴즈 생성을 위해 최소 4개의 단어가 필요합니다.';
+            manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+            return;
+        }
+        const newQuestions = generateQuizFromWords(tempWords);
+        const newQuizSet = { name, questions: newQuestions };
+        const existingIndex = savedWordLists.findIndex(q => q.name === name);
+        if (existingIndex > -1) {
+             savedWordLists[existingIndex] = newQuizSet;
+             manualAddMessage.textContent = `'${name}' 단어장을 덮어썼습니다.`;
+             manualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+        } else {
+            savedWordLists.push(newQuizSet);
+             manualAddMessage.textContent = `'${name}' 단어장이 저장되었습니다!`;
+             manualAddMessage.className = 'text-sm text-green-600 mt-2 h-4';
+        }
+        saveWordLists();
+        renderWordList();
+        tempWords = [];
+        newQuizNameInput.value = '';
+        renderTempWordList();
+    });
+    
+    // --- v4: 랭킹, 기록, 오답노트 리스너 ---
+    
+    // 'input' 대신 'change' 이벤트를 사용하여, 입력이 완료된 후 (포커스를 잃었을 때) 저장합니다.
+    playerNameInput.addEventListener('change', (e) => {
+        savePlayerName(e.target.value);
+    });
+    
+    accordionHeaderOndap.addEventListener('click', () => {
+        accordionHeaderOndap.classList.toggle('open');
+        accordionContentOndap.classList.toggle('open');
+    });
+    
+    accordionHeaderHistory.addEventListener('click', () => {
+        accordionHeaderHistory.classList.toggle('open');
+        accordionContentHistory.classList.toggle('open');
+    });
+    
+    startWrongQuizBtn.addEventListener('click', () => {
+        if (wrongAnswerBank.length === 0) {
+            wrongQuizMessage.textContent = '다시 풀 틀린 문제가 없습니다.';
+            wrongQuizMessage.className = 'text-sm mt-2 h-4 text-center text-red-500';
+            return;
+        }
+        let questionsToQuiz = [...wrongAnswerBank];
+        shuffleArray(questionsToQuiz);
+        startQuiz(questionsToQuiz, "틀린 문제 퀴즈");
+    });
+    
+    clearHistoryBtn.addEventListener('click', () => {
+        quizHistory = [];
+        saveHistory();
+        renderHistory();
+    });
+    
+    // --- v5: 고급 기능 리스너 ---
+    
+    // 발음 기호 자동 검색
+    fetchPhoneticBtn.addEventListener('click', () => {
+        const word = newWordInput.value.trim();
+        if (word) {
+            fetchPhonetic(word);
+        } else {
+            manualAddMessage.textContent = '영어 단어를 먼저 입력하세요.';
+            manualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+        }
+    });
+
+    // OCR 텍스트 추출
+    ocrExtractBtn.addEventListener('click', async () => {
+        const file = ocrImageInput.files[0];
+        if (!file) {
+            ocrMessage.textContent = '이미지 파일을 선택하세요.';
+            ocrMessage.className = 'text-sm text-red-500 mt-2 h-4';
+            return;
+        }
+
+        ocrMessage.textContent = 'AI가 이미지를 분석 중입니다...';
+        ocrMessage.className = 'text-sm text-blue-600 mt-2 h-4';
+        ocrExtractBtn.disabled = true;
+
+        try {
+            const base64Data = await imageToBase64(file);
+            const result = await callGeminiApi(base64Data);
+
+            if (result && result.word && result.meaning) {
+                newWordInput.value = result.word;
+                newMeaningInput.value = result.meaning;
+                ocrMessage.textContent = '텍스트를 성공적으로 추출했습니다!';
+                ocrMessage.className = 'text-sm text-green-600 mt-2 h-4';
+                // 추출 후 자동으로 발음 기호 검색
+                if (result.word) {
+                    fetchPhonetic(result.word);
+                }
+            } else {
+                ocrMessage.textContent = '이미지에서 단어를 찾지 못했습니다.';
+                ocrMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+            }
+        } catch (error) {
+            console.error("OCR Error:", error);
+            ocrMessage.textContent = '텍스트 추출 중 오류가 발생했습니다.';
+            ocrMessage.className = 'text-sm text-red-500 mt-2 h-4';
+        } finally {
+            ocrExtractBtn.disabled = false;
+            ocrImageInput.value = ''; // 파일 입력 초기화
+        }
+    });
+
+    // --- 6. 초기화 ---
+    loadWordLists();
+    loadPlayerName();
+    loadRankings();
+    loadWrongAnswerBank();
+    loadHistory();
+    
+    renderWordList();
+    renderRankings();
+    renderWrongQuizButton();
+    renderHistory();
+    renderTempWordList(); 
+
+</script>
+</body>
+</html>
