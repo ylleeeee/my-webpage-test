@@ -96,6 +96,15 @@ const accordionContentHistory = document.getElementById('accordion-content-histo
 const historyList = document.getElementById('history-list');
 const noHistoryList = document.getElementById('no-history-list');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
+// ...
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+// ▼ 1. 필터 체크박스 변수 추가 ▼
+const filterHistoryCheckbox = document.getElementById('filter-history-checkbox');
+// ▲ 1. 필터 체크박스 변수 추가 ▲
+
+// v5: OCR, 발음 검색 DOM 요소
+// ...
 
 // v5: OCR, 발음 검색 DOM 요소
 const ocrImageInput = document.getElementById('ocr-image-input');
