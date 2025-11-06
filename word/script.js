@@ -4,6 +4,17 @@
  * - 새 단어장 생성/편집/삭제
  * - 학습/퀴즈/랜덤/오답/랭킹/기록
  ************************************************************/
+// --- 안전 가드(최상단에 추가) ---
+console.log('[word] script loaded');
+window.addEventListener('error', (e) => {
+  // 초기 에러가 있으면 알림으로 바로 확인할 수 있게
+  console.warn('Error captured:', e?.message);
+});
+document.addEventListener('DOMContentLoaded', () => {
+  // DOMContentLoaded가 안 잡히면 다시 한 번 강제로 초기화 시도
+  if (!document.getElementById('quiz-list')) return;
+});
+// --- 안전 가드 끝 ---
 
 /* ========================= 1) 기본 데이터 ========================= */
 const sampleQuizData1 = [
