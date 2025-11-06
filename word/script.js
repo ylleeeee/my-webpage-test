@@ -281,7 +281,7 @@ function renderWordList() {
   } else {
     noQuizList.classList.remove('hidden');
   }
-}
+
 
   const hasAny = builtinSets.length > 0 || (savedWordLists && savedWordLists.length > 0);
   if (hasAny) noQuizList.classList.add('hidden');
