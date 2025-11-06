@@ -437,7 +437,7 @@ startLearnBtn.addEventListener('click',()=>{ const {questions,title}=getCombined
 startRandomQuizBtn.addEventListener('click',()=>{
   const {questions}=getCombinedQuestions();
   if(questions.length<20){ selectionMessage.textContent='랜덤 퀴즈를 위해 20개 이상의 단어를 선택하세요.'; selectionMessage.className='text-sm mt-2 h-4 text-center text-red-500'; return; }
-  shuffleArray(questions); startQuiz(questions.slice(0,20),'랜덤 퀴즈 (20문제)');
+  shuffleArray(questions); startQuiz(questions.slice(0,10),'랜덤 퀴즈 (10문제)');
 });
 
 // 퀴즈 네비/스와이프
