@@ -126,6 +126,17 @@
                 <button id="clear-history-btn" class="btn btn-sm btn-danger w-full mb-4">
                     <i class="fas fa-trash-alt mr-2"></i> 모든 기록 지우기
                 </button>
+                <!-- ... (clear-history-btn) ... -->
+</button>
+
+<!-- ▼ 1. '내 기록만 보기' 필터 추가 ▼ -->
+<div class="history-filter-container">
+    <input type="checkbox" id="filter-history-checkbox">
+    <label for="filter-history-checkbox">내 기록만 보기</label>
+</div>
+<!-- ▲ 1. '내 기록만 보기' 필터 추가 ▲ -->
+ <div id="history-list" class="space-y-2 max-h-64 overflow-y-auto pr-2">
+<!-- ... -->
                  <div id="history-list" class="space-y-2 max-h-64 overflow-y-auto pr-2"></div>
                  <p id="no-history-list" class="text-sm text-gray-500 text-center py-4 hidden">학습 기록이 없습니다.</p>
             </div>
