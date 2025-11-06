@@ -556,6 +556,50 @@ quizList.addEventListener('click',e=>{
 });
 accordionHeaderNewQuiz.addEventListener('click',()=>{ accordionHeaderNewQuiz.classList.toggle('open'); accordionContentNewQuiz.classList.toggle('open'); });
 
+/* ---- 편집 모달: 닫기/취소/저장 버튼 바인딩 ---- */
+editModalCloseBtn?.addEventListener('click', (e) => {
+  e.preventDefault();
+  closeEditModal();
+});
+editModalCancelBtn?.addEventListener('click', (e) => {
+  e.preventDefault();
+  closeEditModal();
+});
+editModalSaveBtn?.addEventListener('click', (e) => {
+  e.preventDefault(); // form submit 방지
+  saveEditedQuiz();
+});
+
+/* ---- 편집 모달: 단어 추가 버튼 ---- */
+editAddWordBtn?.addEventListener('click', (e) => {
+  e.preventDefault(); // form submit 방지
+  const w = (editNewWordInput?.value || '').trim();
+  const m = (editNewMeaningInput?.value || '').trim();
+  const p = (editNewPhoneticInput?.value || '').trim();
+
+  if (!w || !m) {
+    editManualAddMessage.textContent = '단어와 의미를 모두 입력해주세요.';
+    editManualAddMessage.className = 'text-sm text-red-500 mt-2 h-4';
+    return;
+  }
+  if (editingTempWords.find(x => x.word.toLowerCase() === w.toLowerCase())) {
+    editManualAddMessage.textContent = `'${w}'는(은) 이미 추가된 단어입니다.`;
+    editManualAddMessage.className = 'text-sm text-yellow-600 mt-2 h-4';
+    return;
+  }
+
+  editingTempWords.push({ word: w, meaning: m, hint: '', phonetic: p || null });
+  renderTempWordList(editingTempWords, editWordListDiv, editWordCountSpan);
+
+  // 입력 초기화
+  editNewWordInput.value = '';
+  editNewMeaningInput.value = '';
+  editNewPhoneticInput.value = '';
+  editNewWordInput.focus();
+
+  editManualAddM
+
+  
 // AI 자동 추가
 addWordAutoBtn.addEventListener('click',async()=>{
   const word=newWordAutoInput.value.trim();
