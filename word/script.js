@@ -436,7 +436,7 @@ startQuizBtn.addEventListener('click',()=>{ const {questions,title}=getCombinedQ
 startLearnBtn.addEventListener('click',()=>{ const {questions,title}=getCombinedQuestions(); startStudy(questions, title + " 학습"); });
 startRandomQuizBtn.addEventListener('click',()=>{
   const {questions}=getCombinedQuestions();
-  if(questions.length<20){ selectionMessage.textContent='랜덤 퀴즈를 위해 20개 이상의 단어를 선택하세요.'; selectionMessage.className='text-sm mt-2 h-4 text-center text-red-500'; return; }
+  if(questions.length<10){ selectionMessage.textContent='랜덤 퀴즈를 위해 20개 이상의 단어를 선택하세요.'; selectionMessage.className='text-sm mt-2 h-4 text-center text-red-500'; return; }
   shuffleArray(questions); startQuiz(questions.slice(0,10),'랜덤 퀴즈 (10문제)');
 });
 
