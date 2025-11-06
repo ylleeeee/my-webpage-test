@@ -548,11 +548,37 @@ quizList.addEventListener('change',e=>{
     selectionMessage.textContent = on ? `${checked.length}개 단어장 선택됨` : '';
   }
 });
-quizList.addEventListener('click',e=>{
-  const btn=e.target.closest('button'); if(!btn) return;
-  const index=parseInt(btn.dataset.index,10);
-  if(btn.classList.contains('delete-quiz-btn')){ savedWordLists.splice(index,1); saveWordLists(); renderWordList(); startLearnBtn.disabled=startQuizBtn.disabled=startRandomQuizBtn.disabled=true; selectionMessage.textContent=''; }
-  if(btn.classList.contains('edit-quiz-btn')){ openEditModal(index); }
+quizList.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+
+  const index = parseInt(btn.dataset.index, 10);
+
+  // 🔹 단어장 삭제 버튼 클릭 시 확인창 띄우기
+  if (btn.classList.contains('delete-quiz-btn')) {
+    const quiz = savedWordLists[index];
+    const quizName = quiz?.name || '이 단어장';
+    const confirmed = window.confirm(`'${quizName}' 단어장을 삭제하겠습니까?`);
+
+    if (!confirmed) return; // 취소 시 중단
+
+    // 확인 시 삭제 실행
+    savedWordLists.splice(index, 1);
+    saveWordLists();
+    renderWordList();
+
+    // 버튼 상태 초기화
+    startLearnBtn.disabled = true;
+    startQuizBtn.disabled = true;
+    startRandomQuizBtn.disabled = true;
+    selectionMessage.textContent = '';
+    return;
+  }
+
+  // 🔹 단어장 편집 버튼 클릭 시
+  if (btn.classList.contains('edit-quiz-btn')) {
+    openEditModal(index);
+  }
 });
 accordionHeaderNewQuiz.addEventListener('click',()=>{ accordionHeaderNewQuiz.classList.toggle('open'); accordionContentNewQuiz.classList.toggle('open'); });
 
